@@ -1,0 +1,37 @@
+import { DashboardService } from './dashboard.service';
+export declare class DashboardController {
+    private readonly dashboardService;
+    constructor(dashboardService: DashboardService);
+    getDashboardStats(user: any): Promise<{
+        totalSalesRevenue: string;
+        totalPaidCollected: string;
+        totalDueAmount: string;
+        netProfit: string;
+        totalItemsCount: number;
+        lowStockCount: number;
+        totalCustomersCount: number;
+        totalCustomerDue: string;
+        totalInvoicesCount: number;
+    }>;
+    getSalesReport(startDate?: string, endDate?: string, cashierId?: string): Promise<{
+        totalRevenue: string;
+        totalDiscount: string;
+        totalInvoices: number;
+        totalItemsSold: number;
+        topSellingItems: {
+            revenue: string;
+            name: string;
+            quantity: number;
+        }[];
+        salesList: {
+            id: string;
+            invoiceNumber: string;
+            customerName: string;
+            grandTotal: string;
+            paidAmount: string;
+            paymentStatus: string;
+            date: Date;
+            createdByName: string;
+        }[];
+    }>;
+}

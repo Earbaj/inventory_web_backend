@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Keeper POS — Management Dashboard & Web Application</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- AUTH MODAL / SCREEN -->
+  <div id="auth-screen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo-badge">⚡ KEEPER POS</div>
+        <h2>Sign In to POS Dashboard</h2>
+        <p>Enterprise Inventory & Billing Management System</p>
+      </div>
+
+      <div class="demo-login-box">
+        <span>Quick Demo Login:</span>
+        <button class="btn btn-sm btn-outline" onclick="prefillLogin('admin@shop.com', 'admin123')">🔑 Admin Demo</button>
+        <button class="btn btn-sm btn-outline" onclick="prefillLogin('manager@shop.com', 'admin123')">👤 Manager Demo</button>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" required placeholder="admin@shop.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" />
+        </div>
+        <div id="auth-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block">Login to POS</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP DASHBOARD -->
+  <div id="main-app" class="app-layout hidden">
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+          <h1>Keeper POS</h1>
+          <span id="user-role-badge" class="badge badge-admin">ADMIN</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" onclick="switchTab('dashboard')">
+          <span class="icon">📊</span> Dashboard
+        </button>
+        <button class="nav-item" onclick="switchTab('pos')">
+          <span class="icon">🛒</span> POS Billing
+        </button>
+        <button class="nav-item" onclick="switchTab('inventory')">
+          <span class="icon">📦</span> Inventory Catalog
+        </button>
+        <button class="nav-item" onclick="switchTab('customers')">
+          <span class="icon">👥</span> Customers & Ledger
+        </button>
+        <button class="nav-item" onclick="switchTab('returns')">
+          <span class="icon">🔄</span> Process Returns
+        </button>
+        <a href="/api/docs" target="_blank" class="nav-item external-link">
+          <span class="icon">📜</span> Live API Docs ↗
+        </a>
+      </nav>
+
+      <div class="user-profile">
+        <div class="user-info">
+          <span id="user-name">Shop Owner</span>
+          <small id="user-email">admin@shop.com</small>
+        </div>
+        <button class="btn-icon" title="Logout" onclick="handleLogout()">🚪</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+      <!-- TOP HEADER -->
+      <header class="top-bar">
+        <div class="page-title">
+          <h2 id="current-tab-title">Dashboard Overview</h2>
+          <p id="current-tab-desc">Real-time stats and shop metrics</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="refreshCurrentTab()">🔄 Refresh Data</button>
+          <button class="btn btn-primary" onclick="switchTab('pos')">⚡ Quick POS Checkout</button>
+        </div>
+      </header>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon icon-revenue">💰</div>
+            <div class="kpi-data">
+              <span class="kpi-label">Total Sales Revenue</span>
+              <h3 id="stat-revenue">৳0.00</h3>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon icon-profit">📈</div>
+            <div class="kpi-data">
+              <span class="kpi-label">Estimated Net Profit</span>
+              <h3 id="stat-profit">৳0.00</h3>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon icon-due">⚠️</div>
+            <div class="kpi-data">
+              <span class="kpi-label">Outstanding Customer Due</span>
+              <h3 id="stat-due">৳0.00</h3>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon icon-alert">📦</div>
+            <div class="kpi-data">
+              <span class="kpi-label">Low Stock Alerts</span>
+              <h3 id="stat-low-stock">0 items</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Recent POS Sales</h3>
+              <button class="btn btn-sm btn-outline" onclick="switchTab('pos')">+ New Sale</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Customer</th>
+                    <th>Grand Total</th>
+                    <th>Paid</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-sales-tbody">
+                  <tr><td colspan="6" class="text-center">Loading sales...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Low Stock Inventory Warning</h3>
+              <button class="btn btn-sm btn-outline" onclick="switchTab('inventory')">View All</button>
+            </div>
+            <div id="low-stock-list" class="item-alert-list">
+              <p class="text-center">Checking stock...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: POS BILLING CHECKOUT -->
+      <section id="tab-pos" class="tab-pane hidden">
+        <div class="pos-layout">
+          <!-- ITEMS SELECTOR -->
+          <div class="pos-catalog card">
+            <div class="catalog-header">
+              <input type="text" id="pos-search" placeholder="🔍 Search product by name or SKU..." oninput="filterPosItems()" />
+              <select id="pos-category-filter" onchange="filterPosItems()">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+
+            <div id="pos-items-grid" class="pos-grid">
+              <!-- Item cards injected by JS -->
+            </div>
+          </div>
+
+          <!-- CART & CHECKOUT PANEL -->
+          <div class="pos-cart card">
+            <div class="cart-header">
+              <h3>Current Cart</h3>
+              <button class="btn btn-sm btn-danger" onclick="clearCart()">Clear Cart</button>
+            </div>
+
+            <div id="cart-items-container" class="cart-list">
+              <div class="empty-cart">Cart is empty. Select items to add.</div>
+            </div>
+
+            <div class="cart-summary">
+              <div class="form-group">
+                <label>Customer</label>
+                <select id="cart-customer-select">
+                  <option value="walk-in">Walk-in Customer</option>
+                </select>
+              </div>
+
+              <div class="summary-line">
+                <span>Subtotal:</span>
+                <span id="cart-subtotal">৳0.00</span>
+              </div>
+
+              <div class="summary-line">
+                <span>Global Discount (৳):</span>
+                <input type="number" id="cart-discount" value="0" min="0" oninput="updateCartTotals()" style="width: 90px; text-align: right;" />
+              </div>
+
+              <div class="summary-line grand-total">
+                <span>Grand Total:</span>
+                <strong id="cart-grand-total">৳0.00</strong>
+              </div>
+
+              <div class="form-group">
+                <label>Paid Amount (৳)</label>
+                <input type="number" id="cart-paid-amount" value="0" min="0" oninput="updateCartTotals()" placeholder="0.00" />
+              </div>
+
+              <div class="summary-line due-line">
+                <span>Due / Balance:</span>
+                <span id="cart-due-amount" class="text-danger">৳0.00</span>
+              </div>
+
+              <button class="btn btn-success btn-block btn-lg" onclick="checkoutPosCart()">💳 Complete Sale & Print Invoice</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: INVENTORY CATALOG -->
+      <section id="tab-inventory" class="tab-pane hidden">
+        <div class="card">
+          <div class="card-header">
+            <div class="header-left">
+              <input type="text" id="inventory-search" placeholder="🔍 Search product name, SKU, or category..." oninput="renderInventoryTable()" />
+            </div>
+            <button class="btn btn-primary" onclick="openAddProductModal()">+ Add New Product</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>SKU</th>
+                  <th>Category</th>
+                  <th>Sell Price</th>
+                  <th>Buy Price (Cost)</th>
+                  <th>Stock</th>
+                  <th>Unit</th>
+                  <th>Low Threshold</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-tbody">
+                <tr><td colspan="9" class="text-center">Loading inventory items...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CUSTOMERS & LEDGER -->
+      <section id="tab-customers" class="tab-pane hidden">
+        <div class="card">
+          <div class="card-header">
+            <h3>Customer Directory</h3>
+            <button class="btn btn-primary" onclick="openAddCustomerModal()">+ Add New Customer</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Phone Number</th>
+                  <th>Address</th>
+                  <th>Opening Balance</th>
+                  <th>Closing Balance</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customers-tbody">
+                <tr><td colspan="6" class="text-center">Loading customers...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: RETURNS & REFUNDS -->
+      <section id="tab-returns" class="tab-pane hidden">
+        <div class="returns-layout card">
+          <div class="card-header">
+            <h3>Process Product Return</h3>
+          </div>
+          
+          <div class="returns-form">
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Invoice Number / ID</label>
+                <input type="text" id="return-invoice-input" placeholder="e.g. INV-20260810-0001" />
+              </div>
+              <button class="btn btn-primary" onclick="fetchSaleForReturn()" style="margin-top: 24px;">Search Invoice</button>
+            </div>
+
+            <div id="return-sale-preview" class="return-preview hidden">
+              <h4>Invoice Items</h4>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Purchased Qty</th>
+                      <th>Unit Price</th>
+                      <th>Return Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody id="return-items-tbody"></tbody>
+                </table>
+              </div>
+
+              <div class="return-footer">
+                <button class="btn btn-danger btn-lg" onclick="submitReturnProcess()">Process Restock & Refund</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- ADD/EDIT PRODUCT MODAL -->
+  <div id="product-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-product-title">Add Product</h3>
+        <button class="btn-close" onclick="closeProductModal()">✕</button>
+      </div>
+      <form id="product-form" onsubmit="saveProduct(event)">
+        <input type="hidden" id="prod-id" />
+        <div class="form-group">
+          <label>Product Name</label>
+          <input type="text" id="prod-name" required placeholder="Wireless Mouse" />
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>SKU Code</label>
+            <input type="text" id="prod-sku" placeholder="SKU-1001" />
+          </div>
+          <div class="form-group flex-1">
+            <label>Category</label>
+            <input type="text" id="prod-category" placeholder="Electronics" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Sell Price (৳)</label>
+            <input type="number" step="0.01" id="prod-sell" required placeholder="450.00" />
+          </div>
+          <div class="form-group flex-1">
+            <label>Buy Price / Cost (৳)</label>
+            <input type="number" step="0.01" id="prod-buy" required placeholder="320.00" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Stock Quantity</label>
+            <input type="number" id="prod-stock" required placeholder="50" />
+          </div>
+          <div class="form-group flex-1">
+            <label>Unit</label>
+            <input type="text" id="prod-unit" value="pcs" placeholder="pcs" />
+          </div>
+          <div class="form-group flex-1">
+            <label>Low Threshold</label>
+            <input type="number" id="prod-low" value="5" placeholder="5" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD CUSTOMER MODAL -->
+  <div id="customer-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add New Customer</h3>
+        <button class="btn-close" onclick="closeCustomerModal()">✕</button>
+      </div>
+      <form id="customer-form" onsubmit="saveCustomer(event)">
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" id="cust-name" required placeholder="Rahim Traders" />
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="cust-phone" placeholder="01711000000" />
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" id="cust-address" placeholder="Dhaka, Bangladesh" />
+        </div>
+        <div class="form-group">
+          <label>Opening Balance (৳)</label>
+          <input type="number" step="0.01" id="cust-opening" value="0" placeholder="0.00" />
+          <small class="text-muted">Positive = Advance payment, Negative = Outstanding Due</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeCustomerModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CUSTOMER LEDGER STATEMENT MODAL -->
+  <div id="ledger-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 id="ledger-customer-title">Customer Ledger Statement</h3>
+        <button class="btn-close" onclick="closeLedgerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Amount (৳)</th>
+                <th>Previous Bal (৳)</th>
+                <th>New Bal (৳)</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESS PAYMENT MODAL -->
+  <div id="payment-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Collect Customer Due Payment</h3>
+        <button class="btn-close" onclick="closePaymentModal()">✕</button>
+      </div>
+      <form id="payment-form" onsubmit="savePayment(event)">
+        <input type="hidden" id="pay-customer-id" />
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" id="pay-customer-name" readonly />
+        </div>
+        <div class="form-group">
+          <label>Payment Amount (৳)</label>
+          <input type="number" step="0.01" id="pay-amount" required placeholder="500.00" />
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select id="pay-method">
+            <option value="cash">Cash</option>
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+            <option value="card">Card</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+          <button type="submit" class="btn btn-success">Receive Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
