@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Environment variables / Secrets
+.env
+.env.*
+
+# Build output
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Testing / Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Firebase / Cloud credentials
+serviceAccountKey.json
+firebase-adminsdk-*.json
+
+# Temporary files
+tmp/
+temp/
