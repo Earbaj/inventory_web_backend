@@ -6,10 +6,11 @@
 
 ## সূচিপত্র (Table of Contents)
 1. [API Rate Limiting (এপিআই রেট লিমিটিং)](#১-api-rate-limiting-এপিআই-রেট-লিমিটিং)
-2. [Role-based Admin System (সুপার অ্যাডমিন ও এপ্রুভাল সিস্টেম)](#২-role-based-admin-system-সুপার-অ্যাডমিন-ও-এপ্রুভাল-সিস্টেম)
-3. [Subscription Packages & Manual Payment Flow (প্যাকেজ ও পেমেন্ট ফ্লো)](#৩-subscription-packages-manual-payment-flow-প্যাকেজ-ও-পেমেন্ট-ফ্লো)
-4. [bKash Payment Integration (বিকাশ পেমেন্ট ইন্টিগ্রেশন)](#৪-bkash-payment-integration-বিকাশ-পেমেন্ট-ইন্টিগ্রেশন)
-5. [Free Tier Feature Limitations (ফ্রি টিয়ার লিমিটেশন লজিক)](#৫-free-tier-feature-limitations-ফ্রি-টিয়ার-লিমিটেশন-লজিক)
+2. [SaaS Role & Multi-Shop Architecture (শপ ও রোল আর্কিটেকচার)](#২-saas-role--multi-shop-architecture-শপ-ও-রোল-আর্কিটেকচার)
+3. [Subscription Packages & Monthly/Yearly Logic (প্যাকেজ ও মেয়াদ নির্ধারণ)](#৩-subscription-packages--monthlyyearly-logic-প্যাকেজ-ও-মেয়াদ-নির্ধারণ)
+4. [Multi-Tenancy Data Isolation (শপ অনুযায়ী ডেটা আলাদা রাখার লজিক)](#৪-multi-tenancy-data-isolation-শপ-অনুযায়ী-ডেটা-আলাদা-রাখার-লজিক)
+5. [bKash Payment Integration (বিকাশ পেমেন্ট ইন্টিগ্রেশন)](#৫-bkash-payment-integration-বিকাশ-পেমেন্ট-ইন্টিগ্রেশন)
+6. [Free Tier Feature Limitations (ফ্রি টিয়ার লিমিটেশন লজিক)](#৬-free-tier-feature-limitations-ফ্রি-টিয়ার-লিমিটেশন-লজিক)
 
 ---
 
@@ -49,16 +50,17 @@ export class AppModule {}
 
 ---
 
-## ২. Role-based Admin System (সুপার অ্যাডমিন ও এপ্রুভাল সিস্টেম)
+## ২. SaaS Role & Multi-Shop Architecture (শপ ও রোল আর্কিটেকচার)
 
-**প্রশ্ন:** পেমেন্ট অনুমোদন করার অ্যাডমিন অ্যাকাউন্টটি কীভাবে তৈরি হবে? এটি কি সুপার অ্যাডমিন হবে নাকি শুধু একটি এপিআই?
+আপনার প্রস্তাবিত আর্কিটেকচার অনুযায়ী প্ল্যাটফর্মের রোল এবং শপ স্ট্রাকচার অত্যন্ত সহজ ও সুরক্ষিত উপায়ে ডিজাইন করা হলো:
 
-**সমাধান:** সবচেয়ে ভালো প্র্যাকটিস হলো আপনার সিস্টেমে `superadmin` রোল চালু করা। 
-- **admin:** ইনি হচ্ছেন দোকানের মালিক (Shop Owner), যিনি তার ম্যানেজার ও বেচাকেনা নিয়ন্ত্রণ করেন।
-- **superadmin:** ইনি হচ্ছেন প্ল্যাটফর্মের মালিক (Platform Owner/You), যিনি পেন্ডিং পেমেন্টগুলো দেখে এপ্রুভ বা রিজেক্ট করতে পারবেন।
+### রোল এবং শপ রিলেশন:
+1. **Super Admin (প্ল্যাটফর্মের মালিক):** পুরো সিস্টেমে মাত্র ১টি অ্যাকাউন্ট থাকবে (যা সিড স্ক্রিপ্ট বা সরাসরি ডাটাবেজ দিয়ে তৈরি হবে)। তিনি কোনো শপের কেনাবেচা বা প্রোডাক্ট দেখতে পারবেন না; তার কাজ হলো শুধু সব শপের অ্যাডমিনদের পেমেন্ট রিকোয়েস্ট ট্র্যাক করা এবং সাবস্ক্রিপশন Approve/Reject করা।
+2. **Admin (শপ ওনার):** রেজিস্ট্রেশন পেজ থেকে নতুন শপ ওনার সাইন-আপ করবেন। সাইন-আপ করার সাথে সাথে তার নামে একটি ইউনিক শপ আইডি (`shopId`) তৈরি হবে। প্রতিটি অ্যাডমিন এক একটি ভিন্ন শপের মালিক।
+3. **Manager (শপের কর্মী):** অ্যাডমিন তার নিজের ড্যাশবোর্ড থেকে ম্যানেজার তৈরি করবেন। ম্যানেজারটি তৈরি হবে ওই অ্যাডমিনের শপ আইডির (`shopId`) অধীনে।
 
-### ধাপ ১: User Schema আপডেট (`src/modules/auth/schemas/user.schema.ts`)
-রোল এনিয়ামে `superadmin` যোগ করুন এবং সাবস্ক্রিপশন ট্র্যাকিং ফিল্ডগুলো যুক্ত করুন:
+### User Schema আপডেট (`src/modules/auth/schemas/user.schema.ts`)
+রোল ও শপ রিলেশন ট্র্যাক করার জন্য ইউজার মডেলে এই পরিবর্তনগুলো আনতে হবে:
 
 ```typescript
 // src/modules/auth/schemas/user.schema.ts
@@ -70,44 +72,19 @@ subscriptionTier: string;
 
 @Prop({ type: Date, default: null })
 subscriptionExpiresAt: Date;
-```
 
-### ধাপ ২: Roles Guard তৈরি করা (`src/common/guards/roles.guard.ts`)
-নিশ্চিত করতে হবে যে শুধুমাত্র `superadmin` রোলধারী ব্যবহারকারীই এপ্রুভাল এপিআই কল করতে পারছেন।
-
-```typescript
-// src/common/guards/roles.guard.ts
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-
-@Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!requiredRoles) return true;
-
-    const request = context.switchToHttp().getRequest();
-    const user = request.user; // JwtAuthGuard থেকে আসা ইউজার অবজেক্ট
-
-    if (!user || !requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('You do not have permission to access this resource');
-    }
-    return true;
-  }
-}
+// প্রতিটি ব্যবহারকারী কোন শপের অধীনে তা নির্ধারণের জন্য
+@Prop({ type: String, default: null })
+shopId: string; // Admin-এর ক্ষেত্রে তার নিজের _id হবে shopId, আর Manager-এর ক্ষেত্রে তার ক্রিয়েটকারী Admin-এর _id হবে shopId
 ```
 
 ---
 
-## ৩. Subscription Packages & Manual Payment Flow (প্যাকেজ ও পেমেন্ট ফ্লো)
+## ৩. Subscription Packages & Monthly/Yearly Logic (প্যাকেজ ও মেয়াদ নির্ধারণ)
 
-### প্যাকেজ দেখানোর নিয়ম (How to show packages)
-প্যাকেজগুলো ডাটাবেজে স্টোর করতে পারেন অথবা ব্যাকএন্ডে একটি স্ট্যাটিক এন্ডপয়েন্ট রাখতে পারেন যা ফ্রন্টএন্ডে শো করবে।
+যখন কোনো শপের অ্যাডমিন সাবস্ক্রিপশন ফি পেমেন্ট করবেন, তখন তিনি Monthly নাকি Yearly প্যাকেজ নিচ্ছেন তার ওপর ভিত্তি করে মেয়াদ হিসাব করা হবে।
 
-#### স্ট্যাটিক প্যাকেজ ডেটা এপিআই:
-`GET /api/subscriptions/packages`
+### ক. প্যাকেজের তালিকা এপিআই:
 ```typescript
 @Get('packages')
 getPackages() {
@@ -117,74 +94,174 @@ getPackages() {
       name: 'Free Starter',
       price: 0,
       limits: { customers: 1, managers: 1, items: 5, sales: 5 },
-      durationDays: 'Lifetime'
+      durationDays: 0 // আজীবন কিন্তু লিমিটেড
     },
     {
-      id: 'premium',
-      name: 'Premium POS Pro',
-      price: 1500, // BDT
-      limits: { customers: 'unlimited', managers: 'unlimited', items: 'unlimited', sales: 'unlimited' },
+      id: 'premium_monthly',
+      name: 'Premium Monthly',
+      price: 1000, // BDT
       durationDays: 30
+    },
+    {
+      id: 'premium_yearly',
+      name: 'Premium Yearly',
+      price: 10000, // BDT (ডিসকাউন্টসহ)
+      durationDays: 365
     }
   ];
 }
 ```
 
-### ম্যানুয়াল সাবস্ক্রিপশন পেমেন্ট ফ্লো
-১. ইউজার একটি পেইড প্যাকেজ সিলেক্ট করবেন।
-২. বিকাশ বা ব্যাংকের মাধ্যমে আপনার দেওয়া নাম্বারে টাকা পাঠিয়ে **Transaction ID (TrxID)** এবং **Package ID** দিয়ে রিকোয়েস্ট সাবমিট করবেন।
-৩. ডাটাবেজে এটি `status: 'pending'` হিসেবে জমা হবে।
-৪. `superadmin` ড্যাশবোর্ডে গিয়ে পেমেন্ট স্ট্যাটাস `approved` করে দেবেন। এপ্রুভ হওয়ার সাথে সাথে ইউজারের `subscriptionTier` পরিবর্তন হয়ে `premium` হবে এবং মেয়াদ ৩০ দিন বাড়িয়ে দেওয়া হবে।
+### খ. পেমেন্ট এপ্রুভাল ও মেয়াদ ক্যালকুলেশন লজিক:
+সুপার অ্যাডমিন যখন পেমেন্ট এপ্রুভ করবেন, তখন `packageId` দেখে মেয়াদ নির্ধারণ হবে:
 
-#### Subscription Schema (`src/modules/subscriptions/schemas/subscription-payment.schema.ts`):
 ```typescript
-@Schema({ timestamps: true })
-export class SubscriptionPayment {
-  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  userId: string;
+// src/modules/subscriptions/subscriptions.service.ts
+async approvePayment(paymentId: string) {
+  const payment = await this.subscriptionPaymentModel.findById(paymentId);
+  if (!payment || payment.status !== 'pending') {
+    throw new BadRequestException('Invalid or already processed payment');
+  }
 
-  @Prop({ required: true })
-  packageId: string; // 'basic', 'premium'
+  // পেমেন্ট রিকোয়েস্টকারী অ্যাডমিন (Shop Owner) ইউজারকে খুঁজুন
+  const user = await this.userModel.findById(payment.userId);
+  if (!user) throw new NotFoundException('Shop owner not found');
 
-  @Prop({ required: true })
-  amount: number;
+  // প্যাকেজ অনুযায়ী দিন হিসাব করুন
+  let addedDays = 30; // default monthly
+  if (payment.packageId === 'premium_yearly') {
+    addedDays = 365;
+  }
 
-  @Prop({ required: true })
-  paymentMethod: string; // 'bkash_manual', 'bank'
+  // বর্তমান মেয়াদের সাথে নতুন মেয়াদ যোগ করার লজিক (Expiration Calculation)
+  let currentExpiry = new Date();
+  if (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > new Date()) {
+    currentExpiry = new Date(user.subscriptionExpiresAt); // আগে থেকেই মেয়াদ থাকলে সেটির পর থেকে যোগ হবে
+  }
+  
+  const newExpiry = new Date(currentExpiry.getTime() + addedDays * 24 * 60 * 60 * 1000);
 
-  @Prop({ required: true, unique: true })
-  transactionId: string;
+  // ইউজারের সাবস্ক্রিপশন আপডেট
+  user.subscriptionTier = 'premium';
+  user.subscriptionExpiresAt = newExpiry;
+  await user.save();
 
-  @Prop({ default: 'pending', enum: ['pending', 'approved', 'rejected'] })
-  status: string;
+  // পেমেন্ট স্ট্যাটাস আপডেট
+  payment.status = 'approved';
+  await payment.save();
 
-  @Prop({ default: null })
-  rejectionReason: string;
-}
-```
-
-#### Approval Endpoint in Controller (`superadmin` দ্বারা নিয়ন্ত্রিত):
-```typescript
-// Controller-এ এপ্রুভাল এন্ডপয়েন্ট
-@UseGuards(JwtAuthGuard, RolesGuard)
-@SetMetadata('roles', ['superadmin']) // শুধুমাত্র superadmin এক্সেস পাবেন
-@Patch('approve/:paymentId')
-async approveSubscription(@Param('paymentId') paymentId: string, @GetUser() superAdmin: any) {
-  return this.subscriptionService.approvePayment(paymentId);
+  return { message: 'Subscription approved successfully', expiresAt: newExpiry };
 }
 ```
 
 ---
 
-## ৪. bKash Payment Integration (বিকাশ পেমেন্ট ইন্টিগ্রেশন)
+## ৪. Multi-Tenancy Data Isolation (শপ অনুযায়ী ডেটা আলাদা রাখার লজিক)
 
-### পদ্ধতি ১: ম্যানুয়াল বিকাশ (কোনো গেটওয়ে চার্জ বা এপিআই ছাড়া)
+শেয়ার্ড ডাটাবেজ ব্যবহার করে প্রজেক্ট ব্রেক না করে কীভাবে শপ এবং ম্যানেজার অনুযায়ী ডেটা সম্পূর্ণ আলাদা রাখবেন তা নিচে ব্যাখ্যা করা হলো:
+
+### শপ ও ম্যানেজার রেজিস্ট্রেশন ফ্লো (Shop & Manager Isolation Flow)
+
+```mermaid
+graph TD
+    A[New Register: Admin/Shop Owner] -->|shopId = admin._id| B(Shop Created)
+    B --> C[Admin Creates Manager]
+    C -->|shopId = admin.shopId| D(Manager Linked to Shop)
+    B --> E[Admin adds Product/Customer]
+    D --> F[Manager adds Product/Customer]
+    E -->|Saved with shopId| G[(MongoDB: Shared Collections)]
+    F -->|Saved with shopId| G
+```
+
+#### ধাপ ১: Admin রেজিস্ট্রেশন (`src/modules/auth/auth.service.ts`-এ `register` ফাংশনে পরিবর্তন)
+যখন কোনো ব্যবহারকারী অ্যাডমিন হিসেবে সাইন-আপ করবেন, তার ইউজার আইডটাই হবে তার দোকানের `shopId`:
+
+```typescript
+// auth.service.ts -> register()
+const newUser = new this.userModel({
+  name: registerDto.name,
+  email,
+  passwordHash,
+  role: 'admin', // ডিফল্ট অ্যাডমিন (Shop Owner)
+  subscriptionTier: 'free',
+  // shopId-তে ইউজারের নিজের আইডি জেনারেট করে বসিয়ে দিন
+  shopId: null, // নিচে এটি সেভ করার পর আপডেট করব
+});
+
+const savedUser = await newUser.save();
+savedUser.shopId = savedUser._id.toString(); // শপ আইডি এবং ইউজার আইডি সেম
+await savedUser.save();
+```
+
+#### ধাপ ২: Manager তৈরি করা (`src/modules/auth/auth.service.ts`-এ `createUser` বা ম্যানেজার এন্ট্রি করার সময়)
+অ্যাডমিন যখন কোনো ম্যানেজার তৈরি করবেন, তখন ম্যানেজার ইউজারের `shopId` হবে ওই অ্যাডমিনের নিজের `shopId`:
+
+```typescript
+// auth.service.ts -> createUser() (ম্যানেজার তৈরির সময়)
+async createUser(createUserDto: CreateUserDto, loggedInAdmin: any) {
+  // নিশ্চিত করুন ক্রিয়েটকারী ব্যক্তি একজন অ্যাডমিন
+  if (loggedInAdmin.role !== 'admin') {
+    throw new ForbiddenException('Only Shop Admins can create managers');
+  }
+
+  const manager = new this.userModel({
+    name: createUserDto.name,
+    email: createUserDto.email,
+    passwordHash: await bcrypt.hash(createUserDto.password, 10),
+    role: 'manager',
+    // ম্যানেজারকে অ্যাডমিনের শপ আইডির সাথে লিংক করা হলো
+    shopId: loggedInAdmin.shopId, 
+  });
+  return await manager.save();
+}
+```
+
+#### ধাপ ৩: প্রোডাক্ট, কাস্টমার এবং সেলস তৈরি ও কুয়েরি করার সময় ফিল্টারিং
+যেকোনো আইটেম বা কাস্টমার তৈরি বা খোঁজার সময় রিকোয়েস্টে আসা ব্যবহারকারীর `shopId` ব্যবহার করতে হবে:
+
+##### স্কিমাগুলোতে `shopId` ফিল্ড যুক্ত করুন:
+```typescript
+// কাস্টমার, আইটেম ও সেলস স্কিমায় এটি যুক্ত হবে:
+@Prop({ required: true, type: String })
+shopId: string;
+```
+
+##### প্রোডাক্ট বা কাস্টমার কুয়েরি করার লজিক (Service File):
+```typescript
+// src/modules/inventory/inventory.service.ts
+async findAllItems(user: any, category?: string) {
+  // ইউজার অ্যাডমিন বা ম্যানেজার যাই হোক না কেন, তার প্রোফাইলে থাকা shopId কুয়েরি ফিল্টারে যাবে
+  const query: any = { shopId: user.shopId };
+  if (category) query.category = category;
+  
+  const items = await this.itemModel.find(query).exec();
+  return items.map(item => this.formatItem(item, user));
+}
+```
+
+##### ডেটা সেভ করার লজিক (Service File):
+```typescript
+// src/modules/inventory/inventory.service.ts
+async createItem(createItemDto: CreateItemDto, user: any) {
+  const item = new this.itemModel({
+    ...createItemDto,
+    shopId: user.shopId, // রিকোয়েস্ট পাঠানো ইউজারের shopId অটোমেটিক্যালি সেভ হবে
+  });
+  return await item.save();
+}
+```
+
+---
+
+## ৫. bKash Payment Integration (বিকাশ পেমেন্ট ইন্টিগ্রেশন)
+
+### পদ্ধতি ১: ম্যানুয়াল বিকাশ
 - গ্রাহক ফ্রন্টএন্ডে আপনার বিকাশ পার্সোনাল নাম্বার দেখতে পাবেন।
 - গ্রাহক টাকা পাঠিয়ে ট্রানজেকশন আইডি (TrxID) ইনপুট দেবেন।
 - অ্যাডমিন প্যানেল থেকে `superadmin` এসএমএস দেখে এটি এপ্রুভ করবেন।
 
 ### পদ্ধতি ২: অটোমেটেড বিকাশ গেটওয়ে (bKash PGW API)
-বিকাশের মার্চেন্ট পোর্টাল থেকে `App Key`, `App Secret`, `Username`, `Password` নিয়ে নিচের এপিআই ফ্লোটি তৈরি করতে হবে:
+বিকাশের মার্চেন্ট পোর্টাল থেকে প্রাপ্ত `App Key`, `App Secret`, `Username`, `Password` নিয়ে এপিআই কল করার ফ্লো:
 
 ```mermaid
 sequenceDiagram
@@ -208,69 +285,34 @@ sequenceDiagram
 
 ---
 
-## ৫. Free Tier Feature Limitations (ফ্রি টিয়ার লিমিটেশন লজিক)
+## ⑥. Free Tier Feature Limitations (ফ্রি টিয়ার লিমিটেশন লজিক)
 
 ফ্রি টিয়ারে থাকা অবস্থায় গ্রাহকদের ওপর লিমিটেশন (১ কাস্টমার, ১ ম্যানেজার, ৫ প্রোডাক্ট, ৫ সেল) প্রয়োগ করতে প্রতিটি মডিউলের সার্ভিস ফাইলে ক্রিয়েট করার পূর্বে একটি **Validation Check** বসাতে হবে।
 
-### লিমিট চেক করার ইউটিলিটি লজিক:
-```typescript
-// subscription-check helper
-async function checkFreeTierLimits(
-  user: any, 
-  model: any, 
-  limit: number, 
-  errorMessage: string,
-  filterQuery: any = {}
-) {
-  // যদি ইউজার পেইড সাবস্ক্রিপশনধারী হয় এবং মেয়াদ শেষ না হয়, তবে লিমিট নেই
-  if (user.role === 'superadmin') return;
-  
-  const currentUser = await this.userModel.findById(user.uid || user.id);
-  const isPremium = currentUser.subscriptionTier !== 'free' && 
-                    currentUser.subscriptionExpiresAt && 
-                    new Date(currentUser.subscriptionExpiresAt) > new Date();
-                    
-  if (isPremium) {
-    return; // নো লিমিট
-  }
-
-  // ফ্রি ব্যবহারকারীর ক্ষেত্রে বর্তমান ডেটা কাউন্ট চেক
-  const count = await model.countDocuments(filterQuery);
-  if (count >= limit) {
-    throw new BadRequestException(errorMessage);
-  }
-}
-```
-
 ### ১. গ্রাহক সীমা (Max 1 Customer Limit)
-`src/modules/customers/customers.service.ts` ফাইলে গ্রাহক তৈরি করার আগে চেক যোগ করুন:
-
 ```typescript
-// customers.service.ts
+// src/modules/customers/customers.service.ts
 async createCustomer(createCustomerDto: CreateCustomerDto, user: any) {
-  // ফ্রি টিয়ারে কাস্টমার লিমিট ১
-  const customerCount = await this.customerModel.countDocuments(); // POS যদি সিঙ্গেল শপ ওনারের আন্ডারে হয়
+  const customerCount = await this.customerModel.countDocuments({ shopId: user.shopId });
   const currentUser = await this.userModel.findById(user.uid || user.id);
   
   if (currentUser.subscriptionTier === 'free' && customerCount >= 1) {
     throw new BadRequestException(
-      'Free tier is limited to 1 customer only. Please upgrade to premium for unlimited customers.'
+      'Free tier is limited to 1 customer only. Please upgrade to premium.'
     );
   }
 
-  const customer = new this.customerModel(createCustomerDto);
+  const customer = new this.customerModel({ ...createCustomerDto, shopId: user.shopId });
   return await customer.save();
 }
 ```
 
 ### ২. ম্যানেজার সীমা (Max 1 Manager Limit)
-`src/modules/auth/auth.service.ts` ফাইলে নতুন ম্যানেজার তৈরি করার সময় চেক যোগ করুন:
-
 ```typescript
-// auth.service.ts
+// src/modules/auth/auth.service.ts
 async createUser(createUserDto: CreateUserDto, creatorUser: any) {
   if (createUserDto.role === 'manager') {
-    const managerCount = await this.userModel.countDocuments({ role: 'manager' });
+    const managerCount = await this.userModel.countDocuments({ role: 'manager', shopId: creatorUser.shopId });
     const creator = await this.userModel.findById(creatorUser.uid || creatorUser.id);
 
     if (creator.subscriptionTier === 'free' && managerCount >= 1) {
@@ -279,17 +321,14 @@ async createUser(createUserDto: CreateUserDto, creatorUser: any) {
       );
     }
   }
-  // ইউজার তৈরির সাধারণ লজিক...
 }
 ```
 
 ### ৩. প্রোডাক্ট সীমা (Max 5 Inventory Items Limit)
-`src/modules/inventory/inventory.service.ts` ফাইলে আইটেম অ্যাড করার আগে চেক যোগ করুন:
-
 ```typescript
-// inventory.service.ts
+// src/modules/inventory/inventory.service.ts
 async createItem(createItemDto: CreateItemDto, user: any) {
-  const itemCount = await this.itemModel.countDocuments();
+  const itemCount = await this.itemModel.countDocuments({ shopId: user.shopId });
   const currentUser = await this.userModel.findById(user.uid || user.id);
 
   if (currentUser.subscriptionTier === 'free' && itemCount >= 5) {
@@ -297,18 +336,14 @@ async createItem(createItemDto: CreateItemDto, user: any) {
       'Free tier is limited to 5 inventory items only. Please upgrade to premium.'
     );
   }
-
-  // প্রোডাক্ট তৈরির সাধারণ লজিক...
 }
 ```
 
 ### ৪. সেলস সীমা (Max 5 Sales Limit)
-`src/modules/sales/sales.service.ts` ফাইলে অর্ডার/সেল প্লেস করার আগে চেক যোগ করুন:
-
 ```typescript
-// sales.service.ts
+// src/modules/sales/sales.service.ts
 async createSale(createSaleDto: CreateSaleDto, user: any) {
-  const saleCount = await this.saleModel.countDocuments();
+  const saleCount = await this.saleModel.countDocuments({ shopId: user.shopId });
   const currentUser = await this.userModel.findById(user.uid || user.id);
 
   if (currentUser.subscriptionTier === 'free' && saleCount >= 5) {
@@ -316,12 +351,5 @@ async createSale(createSaleDto: CreateSaleDto, user: any) {
       'Free tier is limited to 5 sales transactions only. Please upgrade to premium.'
     );
   }
-
-  // সেল প্রসেস করার সাধারণ লজিক...
 }
 ```
-
----
-
-## উপসংহার (Summary)
-এই গাইড অনুযায়ী আপনি যখন ডেভেলপমেন্ট শুরু করবেন, কোড পরিবর্তন না করে ধাপে ধাপে ফাইলগুলো এডিট করতে পারবেন। ফ্রি টিয়ার লিমিটেশন ফিচারটি আপনার প্ল্যাটফর্মকে একটি **SaaS (Software as a Service)** মডেলে রূপান্তরিত করতে সাহায্য করবে এবং বিকাশ অটোমেশন আপনার ম্যানুয়াল কাজের চাপ কমিয়ে দেবে।
