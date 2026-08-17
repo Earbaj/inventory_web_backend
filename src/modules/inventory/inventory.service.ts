@@ -5,6 +5,10 @@ import { Item, ItemDocument } from './schemas/item.schema';
 import { Category, CategoryDocument } from './schemas/category.schema';
 import { CreateItemDto, UpdateItemDto, UpdateStockDto, CreateCategoryDto } from './dto/inventory.dto';
 
+/**
+ * Inventory & Product Catalog Management Service
+ * ইনভেন্টরিতে পণ্য যোগ, তালিকা দেখা, স্টক অ্যাডজাস্টমেন্ট, সফট-ডিলিট এবং ক্যাটাগরি ম্যানেজমেন্ট সার্ভিস।
+ */
 @Injectable()
 export class InventoryService {
   constructor(
@@ -12,8 +16,13 @@ export class InventoryService {
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
   ) {}
 
+  /**
+   * 1. Create Product Item
+   * ইনভেন্টরিতে নতুন পণ্য যোগ করা।
+   * ফ্রি টিয়ার এনফোর্সমেন্ট: ফ্রি প্যাকেজে সর্বোচ্চ ৫টি পর্যন্ত পণ্য যোগ করার সীমাবদ্ধতা রয়েছে।
+   */
   async createItem(createItemDto: CreateItemDto, user: any) {
-    // Check Free Tier Inventory Item Limit (Max 5 Items for Free Tier)
+    // ফ্রি টিয়ার ইনভেন্টরি আইটেম লিমিট চেক (সর্বোচ্চ ৫টি পণ্য)
     if (user.subscriptionTier === 'free') {
       const itemCount = await this.itemModel.countDocuments({
         shopId: user.shopId,
@@ -43,6 +52,9 @@ export class InventoryService {
     return this.formatItem(saved, user);
   }
 
+  /**
+   * 2. List All Active Inventory Items (Optionally filtered by Category)
+   */
   async findAllItems(user: any, category?: string) {
     const query: any = { shopId: user.shopId, isDeleted: { $ne: true } };
     if (category) query.category = category;
@@ -50,18 +62,29 @@ export class InventoryService {
     return items.map(item => this.formatItem(item, user));
   }
 
+  /**
+   * 3. Get Low Stock Warning Items
+   * যেসব পণ্যের মজুদ নির্দিষ্ট থ্রেশহোল্ডের নিচে নেমে গেছে তাদের তালিকা।
+   */
   async findLowStockItems(user: any) {
     const items = await this.itemModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
     const lowStock = items.filter(i => i.stockQuantity <= i.lowStockThreshold);
     return lowStock.map(item => this.formatItem(item, user));
   }
 
+  /**
+   * 4. Find Single Item Details By ID
+   */
   async findOneItem(id: string, user: any) {
     const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
     return this.formatItem(item, user);
   }
 
+  /**
+   * 5. Update Product Details
+   * পণ্যের তথ্য আপডেট করা (কেনা দাম বা Buy Price শুধুমাত্র অ্যাডমিন বা অনুমতিপ্রাপ্ত ইউজার এডিট করতে পারবেন)।
+   */
   async updateItem(id: string, updateItemDto: UpdateItemDto, user: any) {
     const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
@@ -81,6 +104,10 @@ export class InventoryService {
     return this.formatItem(item, user);
   }
 
+  /**
+   * 6. Adjust Stock Quantity (+/- N)
+   * পণ্যের মজুদ সমন্বয় করার মেথড।
+   */
   async updateStock(id: string, updateStockDto: UpdateStockDto, user: any) {
     const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
@@ -90,11 +117,15 @@ export class InventoryService {
     return this.formatItem(item, user);
   }
 
+  /**
+   * 7. Soft-Delete Item (Move to Recycle Bin)
+   * পণ্যের ডাটা সরাসরি না মুছে রিসাইকেল বিনে স্থানান্তর করা।
+   */
   async removeItem(id: string, user: any) {
     const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
 
-    // Perform Soft Delete (Move to Recycle Bin)
+    // সফট ডিলিট ফ্লাগ সেট করা
     item.isDeleted = true;
     item.deletedAt = new Date();
     item.deletedBy = user.uid || user.id;
@@ -103,7 +134,9 @@ export class InventoryService {
     return { message: 'Item moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
   }
 
-  // Categories
+  /**
+   * 8. Create Product Category
+   */
   async createCategory(createCategoryDto: CreateCategoryDto, user: any) {
     const existing = await this.categoryModel.findOne({
       shopId: user.shopId,
@@ -126,6 +159,9 @@ export class InventoryService {
     };
   }
 
+  /**
+   * 9. List All Product Categories
+   */
   async findAllCategories(user: any) {
     const categories = await this.categoryModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
     return categories.map(c => ({
@@ -135,6 +171,9 @@ export class InventoryService {
     }));
   }
 
+  /**
+   * Response Formatter Helper (Protects buyPrice if user lacks permissions)
+   */
   private formatItem(item: ItemDocument, user: any) {
     const canViewBuy = user.role === 'admin' || user.permissions?.canViewBuyPrice;
     return {

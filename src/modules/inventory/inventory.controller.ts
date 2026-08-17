@@ -5,6 +5,10 @@ import { CreateItemDto, UpdateItemDto, UpdateStockDto, CreateCategoryDto } from 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
+/**
+ * Inventory Controller
+ * পণ্য ও ইনভেন্টরি ক্যাটালগ ম্যানেজমেন্টের সকল এইচটিটিপি এপিআই এন্ডপয়েন্ট।
+ */
 @ApiTags('Inventory & Products')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -12,12 +16,20 @@ import { GetUser } from '../../common/decorators/get-user.decorator';
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
+  /**
+   * 1. Create Product Item Endpoint
+   * ইনভেন্টরিতে নতুন প্রোডাক্ট এন্ট্রি করা (ফ্রি টিয়ারে সর্বোচ্চ ৫টি পণ্য যোগ করা যাবে)।
+   */
   @Post('items')
-  @ApiOperation({ summary: 'Create new product item' })
+  @ApiOperation({ summary: 'Create new product item (Max 5 for Free Tier)' })
   createItem(@Body() createItemDto: CreateItemDto, @GetUser() user: any) {
     return this.inventoryService.createItem(createItemDto, user);
   }
 
+  /**
+   * 2. List All Inventory Product Items Endpoint
+   * শপের সকল একটিভ পণ্যের তালিকা দেখা (ঐচ্ছিক ক্যাটাগরি ফিল্টারসহ)।
+   */
   @Get('items')
   @ApiOperation({ summary: 'List all inventory product items' })
   @ApiQuery({ name: 'category', required: false })
@@ -25,18 +37,28 @@ export class InventoryController {
     return this.inventoryService.findAllItems(user, category);
   }
 
+  /**
+   * 3. Get Low Stock Warning Items Endpoint
+   * যেসব পণ্যের মজুদ নির্দিষ্ট থ্রেশহোল্ডের নিচে নেমে গেছে সেগুলোর সতর্কবার্তা তালিকা।
+   */
   @Get('items/low-stock')
   @ApiOperation({ summary: 'Get items with low stock warning (stockQuantity <= lowStockThreshold)' })
   findLowStockItems(@GetUser() user: any) {
     return this.inventoryService.findLowStockItems(user);
   }
 
+  /**
+   * 4. Get Single Item Details Endpoint
+   */
   @Get('items/:id')
   @ApiOperation({ summary: 'Get product item by ID' })
   findOneItem(@Param('id') id: string, @GetUser() user: any) {
     return this.inventoryService.findOneItem(id, user);
   }
 
+  /**
+   * 5. Update Product Details Endpoint
+   */
   @Put('items/:id')
   @ApiOperation({ summary: 'Update item details' })
   updateItem(
@@ -47,6 +69,10 @@ export class InventoryController {
     return this.inventoryService.updateItem(id, updateItemDto, user);
   }
 
+  /**
+   * 6. Adjust Stock Quantity (+/- N) Endpoint
+   * স্টকের পরিমাণ ম্যানুয়ালি বাড়াতে বা কমাতে ব্যবহার করুন।
+   */
   @Patch('items/:id/stock')
   @ApiOperation({ summary: 'Adjust item stock quantity (+/-)' })
   updateStock(
@@ -57,18 +83,28 @@ export class InventoryController {
     return this.inventoryService.updateStock(id, updateStockDto, user);
   }
 
+  /**
+   * 7. Soft-Delete Product Item Endpoint
+   * পণ্য ডিলিট করা (ডাটা ডাটাবেজ থেকে মুছে না গিয়ে রিসাইকেল বিনে স্থানান্তর হবে)।
+   */
   @Delete('items/:id')
   @ApiOperation({ summary: 'Delete product item (Moves to Recycle Bin/Trash)' })
   removeItem(@Param('id') id: string, @GetUser() user: any) {
     return this.inventoryService.removeItem(id, user);
   }
 
+  /**
+   * 8. List All Categories Endpoint
+   */
   @Get('categories')
   @ApiOperation({ summary: 'List all product categories' })
   findAllCategories(@GetUser() user: any) {
     return this.inventoryService.findAllCategories(user);
   }
 
+  /**
+   * 9. Create Product Category Endpoint
+   */
   @Post('categories')
   @ApiOperation({ summary: 'Create a new category' })
   createCategory(@Body() createCategoryDto: CreateCategoryDto, @GetUser() user: any) {
