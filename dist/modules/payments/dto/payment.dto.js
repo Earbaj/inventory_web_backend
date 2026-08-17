@@ -16,19 +16,19 @@ class ProcessPaymentDto {
 }
 exports.ProcessPaymentDto = ProcessPaymentDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d1' }),
+    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d1', description: 'কাস্টমারের ইউনিক MongoDB আইডি' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ProcessPaymentDto.prototype, "customerId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 500.00 }),
+    (0, swagger_1.ApiProperty)({ example: 500.00, description: 'পরিশোধকৃত জমার পরিমাণ (সর্বনিম্ন 0.01 ৳)' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0.01),
     __metadata("design:type", Number)
 ], ProcessPaymentDto.prototype, "amount", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'cash', description: 'cash, bkash, nagad, card, bank' }),
+    (0, swagger_1.ApiProperty)({ example: 'cash', description: 'পেমেন্ট মেথড (যেমন: cash, bkash, nagad, card, bank)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)

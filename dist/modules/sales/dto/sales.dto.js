@@ -17,32 +17,32 @@ class SaleItemDto {
 }
 exports.SaleItemDto = SaleItemDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d1' }),
+    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d1', description: 'পণ্যের ইউনিক আইডি' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], SaleItemDto.prototype, "itemId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 2 }),
+    (0, swagger_1.ApiProperty)({ example: 2, description: 'ক্রয়কৃত পণ্যের পিস/সংখ্যা' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], SaleItemDto.prototype, "quantity", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 450.00 }),
+    (0, swagger_1.ApiProperty)({ example: 450.00, description: 'প্রতি পিসের একক বিক্রয় মূল্য' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], SaleItemDto.prototype, "unitPrice", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 0 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 0, description: 'পণ্যের কাস্টম ডিসকাউন্ট' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], SaleItemDto.prototype, "discount", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'amount', enum: ['amount', 'percent'] }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'amount', enum: ['amount', 'percent'], description: 'ডিসকাউন্টের ধরণ (টাকা নাকি শতাংশ)' }),
     (0, class_validator_1.IsEnum)(['amount', 'percent']),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
@@ -51,39 +51,39 @@ class CreateSaleDto {
 }
 exports.CreateSaleDto = CreateSaleDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'walk-in' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'walk-in', description: 'কাস্টমার আইডি (সাধারণ ক্রেতার জন্য walk-in)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateSaleDto.prototype, "customerId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Walk-in Customer' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Walk-in Customer', description: 'কাস্টমারের নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateSaleDto.prototype, "customerName", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: '' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: '', description: 'কাস্টমারের ফোন নম্বর' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateSaleDto.prototype, "customerPhone", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: [SaleItemDto] }),
+    (0, swagger_1.ApiProperty)({ type: [SaleItemDto], description: 'বিক্রয়কৃত পণ্যসমূহের তালিকা' }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),
     (0, class_transformer_1.Type)(() => SaleItemDto),
     __metadata("design:type", Array)
 ], CreateSaleDto.prototype, "items", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 0 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 0, description: 'ইনভয়েসের উপর সামগ্রিক ডিসকাউন্ট' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateSaleDto.prototype, "discount", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 900.00 }),
+    (0, swagger_1.ApiProperty)({ example: 900.00, description: 'কাস্টমার কর্তৃক নগদ জমা টাকার পরিমাণ' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)

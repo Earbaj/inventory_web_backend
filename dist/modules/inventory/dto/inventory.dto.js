@@ -16,49 +16,49 @@ class CreateItemDto {
 }
 exports.CreateItemDto = CreateItemDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Wireless Mouse' }),
+    (0, swagger_1.ApiProperty)({ example: 'Wireless Mouse', description: 'পণ্যের নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateItemDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'SKU-1001' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'SKU-1001', description: 'পণ্যের কোড বা SKU' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateItemDto.prototype, "sku", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Electronics' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Electronics', description: 'পণ্যের ক্যাটাগরি' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateItemDto.prototype, "category", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 450.00 }),
+    (0, swagger_1.ApiProperty)({ example: 450.00, description: 'বিক্রয় মূল্যে' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateItemDto.prototype, "sellPrice", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 320.00 }),
+    (0, swagger_1.ApiProperty)({ example: 320.00, description: 'কেনা দাম (Cost Price)' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateItemDto.prototype, "buyPrice", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 50 }),
+    (0, swagger_1.ApiProperty)({ example: 50, description: 'প্রাথমিক স্টক পরিমাণ' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateItemDto.prototype, "stockQuantity", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'pcs' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'pcs', description: 'পণ্যের একক (যেমন: pcs, kg, rim)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateItemDto.prototype, "unit", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 5 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 5, description: 'কম স্টকের সতর্কবার্তা সীমা (ডিফল্ট: ৫)' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
@@ -67,52 +67,52 @@ class UpdateItemDto {
 }
 exports.UpdateItemDto = UpdateItemDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Wireless Mouse Ergonomic' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Wireless Mouse Ergonomic', description: 'নতুন নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateItemDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'SKU-1001' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'SKU-1001', description: 'নতুন SKU' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateItemDto.prototype, "sku", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Electronics' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Electronics', description: 'নতুন ক্যাটাগরি' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateItemDto.prototype, "category", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 480.00 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 480.00, description: 'নতুন বিক্রয় মূল্য' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateItemDto.prototype, "sellPrice", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 340.00 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 340.00, description: 'নতুন কেনা দাম' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateItemDto.prototype, "buyPrice", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 60 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 60, description: 'নতুন স্টক পরিমাণ' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateItemDto.prototype, "stockQuantity", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'pcs' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'pcs', description: 'নতুন একক' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateItemDto.prototype, "unit", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 5 }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 5, description: 'নতুন স্টকের সতর্কবার্তা সীমা' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
@@ -121,7 +121,7 @@ class UpdateStockDto {
 }
 exports.UpdateStockDto = UpdateStockDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 10, description: 'Quantity to add (positive) or deduct (negative)' }),
+    (0, swagger_1.ApiProperty)({ example: 10, description: 'স্টক বাড়াতে পজিটিভ (+) সংখ্যা এবং স্টক কমাতে নেগেটিভ (-) সংখ্যা দিন' }),
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], UpdateStockDto.prototype, "adjustment", void 0);
@@ -129,13 +129,13 @@ class CreateCategoryDto {
 }
 exports.CreateCategoryDto = CreateCategoryDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Electronics' }),
+    (0, swagger_1.ApiProperty)({ example: 'Electronics', description: 'ক্যাটাগরির নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateCategoryDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Computer peripherals and gadgets' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Computer peripherals and gadgets', description: 'ক্যাটাগরির বিবরণ' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)

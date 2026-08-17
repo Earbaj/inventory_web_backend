@@ -54,7 +54,7 @@ let InventoryController = class InventoryController {
 exports.InventoryController = InventoryController;
 __decorate([
     (0, common_1.Post)('items'),
-    (0, swagger_1.ApiOperation)({ summary: 'Create new product item' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Create new product item (Max 5 for Free Tier)' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),

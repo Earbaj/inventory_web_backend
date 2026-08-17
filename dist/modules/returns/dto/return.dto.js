@@ -17,13 +17,13 @@ class ReturnItemInputDto {
 }
 exports.ReturnItemInputDto = ReturnItemInputDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d1' }),
+    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d1', description: 'ফেরত দেওয়া পণ্যের আইডি' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ReturnItemInputDto.prototype, "itemId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 1 }),
+    (0, swagger_1.ApiProperty)({ example: 1, description: 'ফেরত দেওয়া পিসের সংখ্যা' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
@@ -32,19 +32,19 @@ class ProcessReturnDto {
 }
 exports.ProcessReturnDto = ProcessReturnDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'walk-in' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'walk-in', description: 'কাস্টমার আইডি (ডিফল্ট: walk-in)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], ProcessReturnDto.prototype, "customerId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d2' }),
+    (0, swagger_1.ApiProperty)({ example: '65c1a2b3c4d5e6f7a8b9c0d2', description: 'মূল সেলস ট্রানজেকশনের আইডি' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ProcessReturnDto.prototype, "saleId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: [ReturnItemInputDto] }),
+    (0, swagger_1.ApiProperty)({ type: [ReturnItemInputDto], description: 'ফেরত প্রদানকৃত পণ্যসমূহের তালিকা' }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),
     (0, class_transformer_1.Type)(() => ReturnItemInputDto),
