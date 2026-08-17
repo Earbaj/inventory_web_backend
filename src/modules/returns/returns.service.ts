@@ -8,6 +8,10 @@ import { Customer, CustomerDocument } from '../customers/schemas/customer.schema
 import { Ledger, LedgerDocument } from '../customers/schemas/ledger.schema';
 import { ProcessReturnDto } from './dto/return.dto';
 
+/**
+ * Sales Returns & Restocking Service
+ * পণ্য ফেরত, স্টকে পণ্য রি-স্টক (Restock) করা, ইনভয়েস মূল্য পুনর্গণনা এবং কাস্টমার লেজার অ্যাডজাস্টমেন্ট করার সার্ভিস।
+ */
 @Injectable()
 export class ReturnsService {
   constructor(
@@ -18,6 +22,14 @@ export class ReturnsService {
     @InjectModel(Ledger.name) private ledgerModel: Model<LedgerDocument>,
   ) {}
 
+  /**
+   * 1. Process Sales Return
+   * ইনভয়েস থেকে পণ্য ফেরত প্রসেস করা:
+   * - প্রতিটি পণ্যের ইউনিট রিফান্ড প্রাইস হিসাব করা।
+   * - পণ্য পুনরায় স্টকে রি-স্টক (Restock: stockQuantity += quantity) করা।
+   * - মূল ইনভয়েসের সাবটোটাল, গ্র্যান্ড টোটাল এবং বাকি (Due) আপডেট করা।
+   * - রেজিস্টার্ড কাস্টমার হলে তার ব্যালেন্স ও লেজার স্টেটমেন্ট খাতায় 'return' হিসাব যুক্ত করা।
+   */
   async processReturn(processReturnDto: ProcessReturnDto, user: any) {
     const sale = await this.saleModel.findOne({ _id: processReturnDto.saleId, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!sale) {
@@ -38,7 +50,7 @@ export class ReturnsService {
           throw new BadRequestException(`Cannot return more than purchased quantity (${saleItem.quantity}) for '${saleItem.name}'`);
         }
 
-        // Calculate unit refund price considering item discount
+        // ডিসকাউন্ট বিবেচনা করে প্রতিটি পণ্যের রিফান্ড মূল্য হিসাব করা
         let finalUnitPrice = saleItem.unitPrice;
         if (saleItem.discountType === 'percent') {
           const factor = (100 - saleItem.discount) / 100;
@@ -51,7 +63,7 @@ export class ReturnsService {
         const itemRefund = finalUnitPrice * returnInfo.quantity;
         totalRefund += itemRefund;
 
-        // Restock inventory item
+        // ইনভেন্টরিতে ফেরত দেওয়া প্রোডাক্ট পুনরায় স্টকে যোগ (Restock) করা
         const item = await this.itemModel.findOne({ _id: saleItem.itemId, shopId: user.shopId, isDeleted: { $ne: true } });
         if (item) {
           item.stockQuantity += returnInfo.quantity;
@@ -93,7 +105,7 @@ export class ReturnsService {
     const paymentStatus = newDue === 0 ? 'paid' : (sale.paidAmount > 0 ? 'partial' : 'due');
     const isReturnedStatus = updatedSaleItems.length === 0 ? 'fully_returned' : 'partially_returned';
 
-    // Update sale record
+    // মেমো/ইনভয়েস আপডেট করা
     sale.items = updatedSaleItems as any;
     sale.subtotal = newSubtotal;
     sale.grandTotal = newGrandTotal;
@@ -102,7 +114,7 @@ export class ReturnsService {
     sale.isReturned = isReturnedStatus;
     await sale.save();
 
-    // Create Return Record
+    // রিটার্ন ট্রানজেকশন রেকর্ড ডাটাবেজে সংরক্ষণ
     const returnRecord = new this.returnModel({
       customerId: processReturnDto.customerId || sale.customerId,
       saleId: sale._id.toString(),
@@ -117,7 +129,7 @@ export class ReturnsService {
 
     const savedReturn = await returnRecord.save();
 
-    // If registered customer, credit customer closing balance and write ledger
+    // কাস্টমার রেজিস্টার্ড হলে লেজার খাতা ও ক্লোজিং ব্যালেন্স ক্রেডিট করা
     const customerId = processReturnDto.customerId || sale.customerId;
     if (customerId && customerId !== 'walk-in') {
       const customer = await this.customerModel.findOne({ _id: customerId, shopId: user.shopId, isDeleted: { $ne: true } });
@@ -160,6 +172,9 @@ export class ReturnsService {
     };
   }
 
+  /**
+   * 2. List All Return History Records
+   */
   async findAllReturns(user: any) {
     const returns = await this.returnModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).sort({ createdAt: -1 }).exec();
     return returns.map(r => ({

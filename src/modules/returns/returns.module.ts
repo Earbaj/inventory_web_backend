@@ -8,8 +8,13 @@ import { Item, ItemSchema } from '../inventory/schemas/item.schema';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Ledger, LedgerSchema } from '../customers/schemas/ledger.schema';
 
+/**
+ * Returns Module
+ * সেলস রিটার্ন, পণ্য রি-স্টক এবং রিফান্ড সংক্রান্ত মডেল ও সার্ভিস রেজিস্টার করার মডিউল।
+ */
 @Module({
   imports: [
+    // Return, Sale, Item, Customer এবং Ledger কালেকশন স্কিমা MongoDB তে রেজিস্টার করা
     MongooseModule.forFeature([
       { name: Return.name, schema: ReturnSchema },
       { name: Sale.name, schema: SaleSchema },
