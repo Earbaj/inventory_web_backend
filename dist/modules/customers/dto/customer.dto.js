@@ -16,25 +16,25 @@ class CreateCustomerDto {
 }
 exports.CreateCustomerDto = CreateCustomerDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Rahim Traders' }),
+    (0, swagger_1.ApiProperty)({ example: 'Rahim Traders', description: 'কাস্টমারের নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateCustomerDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: '01711000000' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: '01711000000', description: 'কাস্টমারের মোবাইল নম্বর (ঐচ্ছিক)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateCustomerDto.prototype, "phone", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Motijheel, Dhaka' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Motijheel, Dhaka', description: 'কাস্টমারের ঠিকানা (ঐচ্ছিক)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateCustomerDto.prototype, "address", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 0, description: 'Positive is advance (+), negative is due (-)' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 0, description: 'প্রাথমিক ব্যালেন্স (পজিটিভ (+) মানে অগ্রিম জমা, নেগেটিভ (-) মানে বাকি)' }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
@@ -43,19 +43,19 @@ class UpdateCustomerDto {
 }
 exports.UpdateCustomerDto = UpdateCustomerDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Rahim Store' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Rahim Store', description: 'আপডেটেড নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateCustomerDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: '01711000000' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: '01711000000', description: 'আপডেটেড মোবাইল নম্বর' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateCustomerDto.prototype, "phone", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Dhanmondi, Dhaka' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Dhanmondi, Dhaka', description: 'আপডেটেড ঠিকানা' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
