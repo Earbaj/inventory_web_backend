@@ -5,6 +5,10 @@ import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { Ledger, LedgerDocument } from './schemas/ledger.schema';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
 
+/**
+ * Customers & Ledger Management Service
+ * কাস্টমার তৈরি, তথ্য আপডেট, সফট-ডিলিট এবং লেনদেন স্টেটমেন্ট (লেজার খাতা) ম্যানেজ করার সার্ভিস।
+ */
 @Injectable()
 export class CustomersService {
   constructor(
@@ -12,8 +16,13 @@ export class CustomersService {
     @InjectModel(Ledger.name) private ledgerModel: Model<LedgerDocument>,
   ) {}
 
+  /**
+   * 1. Create Customer
+   * নতুন কাস্টমার রেজিস্টার করা এবং লেজার খাতায় ওপেনিং ব্যালেন্স এন্ট্রি দেওয়া।
+   * ফ্রি টিয়ার লিমিটেশন: ফ্রি প্ল্যানে সর্বোচ্চ ১ জন কাস্টমার তৈরি করা যাবে।
+   */
   async create(createCustomerDto: CreateCustomerDto, user: any) {
-    // Check Free Tier Customer Limit (Max 1 Customer for Free Tier)
+    // ফ্রি টিয়ার কাস্টমার লিমিট চেক (সর্বোচ্চ ১টি কাস্টমার)
     if (user.subscriptionTier === 'free') {
       const activeCustomerCount = await this.customerModel.countDocuments({
         shopId: user.shopId,
@@ -33,13 +42,13 @@ export class CustomersService {
       address: createCustomerDto.address || '',
       openingBalance,
       closingBalance: openingBalance,
-      shopId: user.shopId,
+      shopId: user.shopId, // রিকোয়েস্ট পাঠানো ইউজারের shopId বসবে
       isDeleted: false,
     });
 
     const saved = await customer.save();
 
-    // Create initial opening balance ledger record
+    // প্রাথমিক জের (Opening Balance) লেজার রেকর্ডে সংরক্ষণ
     const ledger = new this.ledgerModel({
       customerId: saved._id,
       type: 'opening',
@@ -58,6 +67,10 @@ export class CustomersService {
     return this.formatCustomer(saved);
   }
 
+  /**
+   * 2. List All Active Customers for Current Shop
+   * লগইন থাকা ইউজারের শপের এক্টিভ (isDeleted: false) কাস্টমারদের তালিকা।
+   */
   async findAll(user: any) {
     const customers = await this.customerModel
       .find({ shopId: user.shopId, isDeleted: { $ne: true } })
@@ -65,6 +78,9 @@ export class CustomersService {
     return customers.map(c => this.formatCustomer(c));
   }
 
+  /**
+   * 3. Find Single Customer Profile By ID
+   */
   async findOne(id: string, user: any) {
     const customer = await this.customerModel.findOne({
       _id: id,
@@ -75,6 +91,9 @@ export class CustomersService {
     return this.formatCustomer(customer);
   }
 
+  /**
+   * 4. Update Customer Info
+   */
   async update(id: string, updateCustomerDto: UpdateCustomerDto, user: any) {
     const customer = await this.customerModel.findOne({
       _id: id,
@@ -91,6 +110,10 @@ export class CustomersService {
     return this.formatCustomer(customer);
   }
 
+  /**
+   * 5. Soft-Delete Customer (Move to Recycle Bin)
+   * সরাসরি ডাটা মুছে ফেলা হয় না, isDeleted: true ফ্লাগ বসিয়ে রিসাইকেল বিনে জমা রাখা হয়।
+   */
   async remove(id: string, user: any) {
     const customer = await this.customerModel.findOne({
       _id: id,
@@ -99,13 +122,13 @@ export class CustomersService {
     });
     if (!customer) throw new NotFoundException('Customer not found');
 
-    // Perform Soft-Delete (Move to Recycle Bin)
+    // সফট-ডিলিট প্রয়োগ
     customer.isDeleted = true;
     customer.deletedAt = new Date();
     customer.deletedBy = user.uid || user.id;
     await customer.save();
 
-    // Soft-delete associated ledger records
+    // কাস্টমারের সাথে যুক্ত লেজার রেকর্ড সফট-ডিলিট করা
     await this.ledgerModel.updateMany(
       { customerId: id, shopId: user.shopId },
       { isDeleted: true, deletedAt: new Date(), deletedBy: user.uid || user.id }
@@ -114,6 +137,10 @@ export class CustomersService {
     return { message: 'Customer moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
   }
 
+  /**
+   * 6. Get Customer Ledger Statement History
+   * কাস্টমারের সমস্ত কেনাবেচা, জমা এবং পণ্য ফেরতের কালানুক্রমিক হিসেব বিবরণী।
+   */
   async getLedger(customerId: string, user: any) {
     const customer = await this.customerModel.findOne({
       _id: customerId,
@@ -139,6 +166,9 @@ export class CustomersService {
     }));
   }
 
+  /**
+   * Response Formatting Helper
+   */
   private formatCustomer(customer: CustomerDocument) {
     return {
       id: customer._id.toString(),
