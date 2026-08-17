@@ -8,8 +8,13 @@ import { Ledger, LedgerSchema } from '../customers/schemas/ledger.schema';
 import { TrashService } from './trash.service';
 import { TrashController } from './trash.controller';
 
+/**
+ * Trash & Recycle Bin Module
+ * রিসাইকেল বিন এবং ডাটা রিকভারি ফিচারসমূহের সার্ভিস ও মডেল রেজিস্ট্রেশন মডিউল।
+ */
 @Module({
   imports: [
+    // Item, Customer, Sale, Return এবং Ledger কালেকশন স্কিমা MongoDB তে রেজিস্টার করা
     MongooseModule.forFeature([
       { name: Item.name, schema: ItemSchema },
       { name: Customer.name, schema: CustomerSchema },

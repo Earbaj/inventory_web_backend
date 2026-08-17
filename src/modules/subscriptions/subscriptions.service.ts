@@ -5,6 +5,10 @@ import { SubscriptionPayment, SubscriptionPaymentDocument } from './schemas/subs
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { SubmitManualPaymentDto, RejectPaymentDto } from './dto/subscription.dto';
 
+/**
+ * Subscriptions & Manual bKash Payments Service
+ * প্ল্যাটফর্ম সাবস্ক্রিপশন প্যাকেজ, ম্যানুয়াল বিকাশ/নগদ পেমেন্ট জমা, সুপার অ্যাডমিন রিভিউ এবং সাবস্ক্রিপশন মেয়াদের ডেট এক্সটেনশন সার্ভিস।
+ */
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
@@ -15,7 +19,8 @@ export class SubscriptionsService {
   ) {}
 
   /**
-   * Public Subscription Package Catalog
+   * 1. Public Subscription Package Catalog
+   * প্ল্যাটফর্মের প্যাকেজ সমূহের বিবরণ (Free Starter, Premium Monthly, Premium Yearly)।
    */
   getPackages() {
     return [
@@ -31,7 +36,7 @@ export class SubscriptionsService {
           items: 5,
           sales: 5,
         },
-        description: 'Starter tier with strict basic usage limits.',
+        description: 'ফ্রি স্টার্টার টিয়ার। সর্বোচ্চ ১টি কাস্টমার, ১টি ম্যানেজার, ৫টি আইটেম ও ৫টি বিক্রির সুবিধা।',
       },
       {
         id: 'premium_monthly',
@@ -45,7 +50,7 @@ export class SubscriptionsService {
           items: 'unlimited',
           sales: 'unlimited',
         },
-        description: 'Full unlimited access for 30 days.',
+        description: '৩০ দিনের জন্য আনলিমিটেড অল-এক্সেস প্রিমিয়াম প্যাকেজ।',
       },
       {
         id: 'premium_yearly',
@@ -59,13 +64,14 @@ export class SubscriptionsService {
           items: 'unlimited',
           sales: 'unlimited',
         },
-        description: 'Full unlimited access for 1 year with discounted price.',
+        description: '১ বছরের (৩৬৫ দিন) জন্য ছাড়কৃত প্রিমিয়াম প্যাকেজ।',
       },
     ];
   }
 
   /**
-   * Get Manual Payment Instructions & bKash Merchant Info
+   * 2. Get Manual Payment Instructions & Merchant Accounts Info
+   * টাকা পাঠানোর জন্য মার্চেন্ট বিকাশ/নগদ নম্বর ও নির্দেশনাসমূহ।
    */
   getPaymentInfo() {
     return {
@@ -78,16 +84,17 @@ export class SubscriptionsService {
         branch: 'Motijheel, Dhaka',
       },
       instructions: [
-        '1. Send exact package fee to the provided bKash / Nagad Personal/Merchant Send Money number.',
-        '2. Copy the Transaction ID (TrxID) received in confirmation SMS.',
-        '3. Fill out the payment request form with your TrxID and Sender Account Number.',
-        '4. SuperAdmin will verify your payment and activate your Premium Subscription.',
+        '১. প্রদানকৃত বিকাশ/নগদ মার্চেন্ট অথবা পার্সোনাল নম্বরে সঠিক সাবস্ক্রিপশন ফি সেন্ড মানি করুন।',
+        '২. কনফার্মেশন মেসেজে প্রাপ্ত Transaction ID (TrxID) কপি করুন।',
+        '৩. ফর্মটিতে TrxID ও আপনার বিকাশ/নগদ নম্বর সাবমিট করুন।',
+        '৪. সুপার অ্যাডমিন ট্রানজেকশন ভেরিফাই করে আপনার প্রিমিয়াম সাবস্ক্রিপশন চালু করে দেবে।',
       ],
     };
   }
 
   /**
-   * Submit a Manual Subscription Payment Request (Shop Admin)
+   * 3. Submit Manual Subscription Payment Request (Shop Admin Only)
+   * শপ ওনার পেমেন্ট সম্পন্ন করে TrxID ও মোবাইল নম্বর সাবমিট করবেন।
    */
   async submitManualPayment(dto: SubmitManualPaymentDto, user: any) {
     if (user.role !== 'admin' && user.role !== 'superadmin') {
@@ -115,7 +122,7 @@ export class SubscriptionsService {
   }
 
   /**
-   * Get Payment Request History for Current Shop Owner
+   * 4. Get Payment Request History for Current Shop Owner
    */
   async getMyPaymentRequests(user: any) {
     return this.subscriptionPaymentModel
@@ -125,7 +132,8 @@ export class SubscriptionsService {
   }
 
   /**
-   * Get All Pending Payment Requests (SuperAdmin Only)
+   * 5. Get All Pending Payment Requests (SuperAdmin Only)
+   * সুপার অ্যাডমিনের পর্যালোচনার জন্য পেন্ডিং পেমেন্ট রিকোয়েস্টের তালিকা।
    */
   async getPendingPayments(user: any) {
     if (user.role !== 'superadmin') {
@@ -137,7 +145,7 @@ export class SubscriptionsService {
       .sort({ createdAt: 1 })
       .exec();
 
-    // Populate user/shop details
+    // শপ মালিকের ইমেইল ও নাম যুক্ত করা
     const result = [];
     for (const payment of pendingPayments) {
       const shopOwner = await this.userModel.findById(payment.userId).select('name email subscriptionTier subscriptionExpiresAt');
@@ -151,7 +159,11 @@ export class SubscriptionsService {
   }
 
   /**
-   * SuperAdmin Approves Subscription Payment Request & Upgrades Expiry
+   * 6. SuperAdmin Approves Subscription Payment Request & Extends Expiry Date
+   * পেমেন্ট এপ্রুভাল লজিক:
+   * - পেমেন্ট স্ট্যাটাস 'approved' করা।
+   * - ইউজারের সাবস্ক্রিপশন মেয়াদের শেষ তারিখের সাথে ৩০ দিন বা ৩৬৫ দিন যোগ করা।
+   * - শপের সকল ইউজার ও ম্যানেজারের টিয়ার 'premium' এ উন্নীত করা।
    */
   async approvePayment(paymentId: string, superAdminUser: any) {
     if (superAdminUser.role !== 'superadmin') {
@@ -168,13 +180,13 @@ export class SubscriptionsService {
       throw new NotFoundException('Shop Owner account not found');
     }
 
-    // Determine extension days based on package
-    let addedDays = 30; // Default monthly
+    // প্যাকেজ অনুযায়ী মেয়াদের দিন সংখ্যা নির্ধারণ
+    let addedDays = 30; // ডিফল্ট মাসভিত্তিক
     if (payment.packageId === 'premium_yearly') {
       addedDays = 365;
     }
 
-    // Expiration Calculation Logic: Extend from existing active expiry if in future, else from NOW
+    // মেয়াদী তারিখ হিসাব: পূর্বে মেয়াদ বাকি থাকলে তার সাথে যোগ হবে, নতুবা বর্তমান সময় থেকে শুরু হবে
     let currentExpiry = new Date();
     if (shopOwner.subscriptionExpiresAt && new Date(shopOwner.subscriptionExpiresAt) > new Date()) {
       currentExpiry = new Date(shopOwner.subscriptionExpiresAt);
@@ -182,18 +194,18 @@ export class SubscriptionsService {
 
     const newExpiry = new Date(currentExpiry.getTime() + addedDays * 24 * 60 * 60 * 1000);
 
-    // Update Shop Owner Subscription Tier & Expiry Date
+    // শপ ওনারের সাবস্ক্রিপশন প্রিমিয়াম এ আপগ্রেড এবং মেয়াদ আপডেট
     shopOwner.subscriptionTier = 'premium';
     shopOwner.subscriptionExpiresAt = newExpiry;
     await shopOwner.save();
 
-    // Also update all managers in this shop to premium
+    // এই শপের আওতাধীন সকল ম্যানেজারের সাবস্ক্রিপশন প্রিমিয়ামে আপগ্রেড করা
     await this.userModel.updateMany(
       { shopId: shopOwner.shopId },
       { subscriptionTier: 'premium', subscriptionExpiresAt: newExpiry }
     );
 
-    // Update Payment Request Record Status
+    // পেমেন্ট স্ট্যাটাস এপ্রুভড হিসেবে আপডেট
     payment.status = 'approved';
     payment.approvedAt = new Date();
     payment.approvedBy = superAdminUser.uid || superAdminUser.id;
@@ -210,7 +222,7 @@ export class SubscriptionsService {
   }
 
   /**
-   * SuperAdmin Rejects Subscription Payment Request
+   * 7. SuperAdmin Rejects Subscription Payment Request
    */
   async rejectPayment(paymentId: string, dto: RejectPaymentDto, superAdminUser: any) {
     if (superAdminUser.role !== 'superadmin') {

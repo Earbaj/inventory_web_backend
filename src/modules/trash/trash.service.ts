@@ -7,6 +7,10 @@ import { Sale, SaleDocument } from '../sales/schemas/sale.schema';
 import { Return, ReturnDocument } from '../returns/schemas/return.schema';
 import { Ledger, LedgerDocument } from '../customers/schemas/ledger.schema';
 
+/**
+ * Trash & Data Recovery (Recycle Bin) Service
+ * রিসাইকেল বিনের সফট-ডিলিট ফাইল তালিকা দেখা, ডিলিট হওয়া ডাটা একই টেবিলে রিস্টোর (Restore) করা এবং পারমানেন্ট ডিলিট (Hard Delete) করার সার্ভিস।
+ */
 @Injectable()
 export class TrashService {
   private readonly logger = new Logger(TrashService.name);
@@ -20,7 +24,8 @@ export class TrashService {
   ) {}
 
   /**
-   * Get all soft-deleted records for the user's shop
+   * 1. Get All Soft-Deleted Records for Current Shop (Recycle Bin List)
+   * নিজের শপের সফট-ডিলিট হওয়া সকল ডাটা (Items, Customers, Sales, Returns) দেখা।
    */
   async getTrashItems(user: any) {
     const shopId = user.shopId;
@@ -73,12 +78,14 @@ export class TrashService {
   }
 
   /**
-   * Restore a soft-deleted item back to active database list
+   * 2. Restore Soft-Deleted Record Back to Active Database Table
+   * ভুলবশত মুছে ফেলা ডাটাকে আগের সক্রিয় টেবিলে ফিরিয়ে আনা (isDeleted: false করা)।
    */
   async restoreItem(entityType: string, id: string, user: any) {
     const shopId = user.shopId;
     const type = entityType.toLowerCase();
 
+    // ক) ইনভেন্টরি প্রোডাক্ট রিস্টোর
     if (type === 'item' || type === 'items' || type === 'inventory') {
       const item = await this.itemModel.findOne({ _id: id, shopId, isDeleted: true });
       if (!item) throw new NotFoundException('Deleted inventory item not found in trash');
@@ -90,6 +97,7 @@ export class TrashService {
       return { message: `Inventory item '${item.name}' successfully restored back to active inventory table.`, item };
     }
 
+    // খ) কাস্টমার প্রোফাইল ও লেজার রিস্টোর
     if (type === 'customer' || type === 'customers') {
       const customer = await this.customerModel.findOne({ _id: id, shopId, isDeleted: true });
       if (!customer) throw new NotFoundException('Deleted customer not found in trash');
@@ -98,12 +106,13 @@ export class TrashService {
       customer.deletedBy = null;
       await customer.save();
 
-      // Restore associated ledgers
+      // কাস্টমারের সাথে যুক্ত লেজার স্টেটমেন্ট রিস্টোর
       await this.ledgerModel.updateMany({ customerId: id, shopId }, { isDeleted: false, deletedAt: null, deletedBy: null });
       this.logger.log(`Restored customer ${id} for shop ${shopId}`);
       return { message: `Customer '${customer.name}' successfully restored back to active customers table.`, customer };
     }
 
+    // গ) মেমো/ইনভয়েস রিস্টোর
     if (type === 'sale' || type === 'sales') {
       const sale = await this.saleModel.findOne({ _id: id, shopId, isDeleted: true });
       if (!sale) throw new NotFoundException('Deleted sale invoice not found in trash');
@@ -115,6 +124,7 @@ export class TrashService {
       return { message: `Sale Invoice #${sale.invoiceNumber} successfully restored back to active sales table.`, sale };
     }
 
+    // ঘ) সেলস রিটার্ন রিস্টোর
     if (type === 'return' || type === 'returns') {
       const ret = await this.returnModel.findOne({ _id: id, shopId, isDeleted: true });
       if (!ret) throw new NotFoundException('Deleted return record not found in trash');
@@ -130,7 +140,8 @@ export class TrashService {
   }
 
   /**
-   * Permanently delete (Hard Delete) a record from MongoDB database storage
+   * 3. Permanently Delete (Hard Delete) Record from MongoDB Database Storage (Shop Admin Only)
+   * রিসাইকেল বিন থেকে স্থায়ীভাবে ডাটাবেজ স্টোরেজ থেকে ডিলিট করার এপিআই।
    */
   async permanentDelete(entityType: string, id: string, user: any) {
     if (user.role !== 'admin' && user.role !== 'superadmin') {
