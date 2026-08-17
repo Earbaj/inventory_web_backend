@@ -50,9 +50,29 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, enum: ['admin', 'manager'], default: 'manager' }),
+    (0, mongoose_1.Prop)({ required: true, enum: ['superadmin', 'admin', 'manager'], default: 'admin' }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, enum: ['free', 'basic', 'premium'], default: 'free' }),
+    __metadata("design:type", String)
+], User.prototype, "subscriptionTier", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], User.prototype, "subscriptionExpiresAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null, index: true }),
+    __metadata("design:type", String)
+], User.prototype, "shopId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], User.prototype, "resetPasswordCode", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], User.prototype, "resetPasswordExpiresAt", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ type: exports.ManagerPermissionsSchema, default: () => ({}) }),
     __metadata("design:type", ManagerPermissions)

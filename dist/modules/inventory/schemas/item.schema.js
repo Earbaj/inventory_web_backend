@@ -46,6 +46,22 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true, default: 5 }),
     __metadata("design:type", Number)
 ], Item.prototype, "lowStockThreshold", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: String, index: true }),
+    __metadata("design:type", String)
+], Item.prototype, "shopId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: Boolean, default: false, index: true }),
+    __metadata("design:type", Boolean)
+], Item.prototype, "isDeleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], Item.prototype, "deletedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Item.prototype, "deletedBy", void 0);
 exports.Item = Item = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 ], Item);

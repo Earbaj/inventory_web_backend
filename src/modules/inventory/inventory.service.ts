@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Item, ItemDocument } from './schemas/item.schema';
@@ -13,6 +13,19 @@ export class InventoryService {
   ) {}
 
   async createItem(createItemDto: CreateItemDto, user: any) {
+    // Check Free Tier Inventory Item Limit (Max 5 Items for Free Tier)
+    if (user.subscriptionTier === 'free') {
+      const itemCount = await this.itemModel.countDocuments({
+        shopId: user.shopId,
+        isDeleted: { $ne: true },
+      });
+      if (itemCount >= 5) {
+        throw new BadRequestException(
+          'Free tier is limited to 5 inventory items only. Please upgrade to premium.'
+        );
+      }
+    }
+
     const item = new this.itemModel({
       name: createItemDto.name,
       sku: createItemDto.sku || '',
@@ -22,6 +35,8 @@ export class InventoryService {
       stockQuantity: createItemDto.stockQuantity,
       unit: createItemDto.unit || 'pcs',
       lowStockThreshold: createItemDto.lowStockThreshold ?? 5,
+      shopId: user.shopId,
+      isDeleted: false,
     });
 
     const saved = await item.save();
@@ -29,26 +44,26 @@ export class InventoryService {
   }
 
   async findAllItems(user: any, category?: string) {
-    const query: any = {};
+    const query: any = { shopId: user.shopId, isDeleted: { $ne: true } };
     if (category) query.category = category;
     const items = await this.itemModel.find(query).exec();
     return items.map(item => this.formatItem(item, user));
   }
 
   async findLowStockItems(user: any) {
-    const items = await this.itemModel.find().exec();
+    const items = await this.itemModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
     const lowStock = items.filter(i => i.stockQuantity <= i.lowStockThreshold);
     return lowStock.map(item => this.formatItem(item, user));
   }
 
   async findOneItem(id: string, user: any) {
-    const item = await this.itemModel.findById(id);
+    const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
     return this.formatItem(item, user);
   }
 
   async updateItem(id: string, updateItemDto: UpdateItemDto, user: any) {
-    const item = await this.itemModel.findById(id);
+    const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
 
     if (updateItemDto.name !== undefined) item.name = updateItemDto.name;
@@ -67,7 +82,7 @@ export class InventoryService {
   }
 
   async updateStock(id: string, updateStockDto: UpdateStockDto, user: any) {
-    const item = await this.itemModel.findById(id);
+    const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
 
     item.stockQuantity = Math.max(0, item.stockQuantity + updateStockDto.adjustment);
@@ -75,20 +90,33 @@ export class InventoryService {
     return this.formatItem(item, user);
   }
 
-  async removeItem(id: string) {
-    const item = await this.itemModel.findByIdAndDelete(id);
+  async removeItem(id: string, user: any) {
+    const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!item) throw new NotFoundException('Item not found');
-    return { message: 'Item deleted successfully' };
+
+    // Perform Soft Delete (Move to Recycle Bin)
+    item.isDeleted = true;
+    item.deletedAt = new Date();
+    item.deletedBy = user.uid || user.id;
+    await item.save();
+
+    return { message: 'Item moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
   }
 
   // Categories
-  async createCategory(createCategoryDto: CreateCategoryDto) {
-    const existing = await this.categoryModel.findOne({ name: createCategoryDto.name.trim() });
-    if (existing) throw new ConflictException('Category already exists');
+  async createCategory(createCategoryDto: CreateCategoryDto, user: any) {
+    const existing = await this.categoryModel.findOne({
+      shopId: user.shopId,
+      name: createCategoryDto.name.trim(),
+      isDeleted: { $ne: true },
+    });
+    if (existing) throw new ConflictException('Category already exists in your shop');
 
     const cat = new this.categoryModel({
       name: createCategoryDto.name.trim(),
       description: createCategoryDto.description || '',
+      shopId: user.shopId,
+      isDeleted: false,
     });
     const saved = await cat.save();
     return {
@@ -98,8 +126,8 @@ export class InventoryService {
     };
   }
 
-  async findAllCategories() {
-    const categories = await this.categoryModel.find().exec();
+  async findAllCategories(user: any) {
+    const categories = await this.categoryModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
     return categories.map(c => ({
       id: c._id.toString(),
       name: c.name,

@@ -24,7 +24,7 @@ export class ReturnsController {
 
   @Get()
   @ApiOperation({ summary: 'List return transaction history' })
-  findAllReturns() {
-    return this.returnsService.findAllReturns();
+  findAllReturns(@GetUser() user: any) {
+    return this.returnsService.findAllReturns(user);
   }
 }

@@ -26,14 +26,14 @@ let SalesController = class SalesController {
     createSale(createSaleDto, user) {
         return this.salesService.createSale(createSaleDto, user);
     }
-    findAllSales(cashierId, paymentStatus) {
-        return this.salesService.findAllSales(cashierId, paymentStatus);
+    findAllSales(user, cashierId, paymentStatus) {
+        return this.salesService.findAllSales(user, cashierId, paymentStatus);
     }
-    findByInvoice(invoiceNumber) {
-        return this.salesService.findByInvoice(invoiceNumber);
+    findByInvoice(invoiceNumber, user) {
+        return this.salesService.findByInvoice(invoiceNumber, user);
     }
-    findOneSale(id) {
-        return this.salesService.findOneSale(id);
+    findOneSale(id, user) {
+        return this.salesService.findOneSale(id, user);
     }
 };
 exports.SalesController = SalesController;
@@ -51,26 +51,29 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'List all sales invoices' }),
     (0, swagger_1.ApiQuery)({ name: 'cashierId', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'paymentStatus', required: false }),
-    __param(0, (0, common_1.Query)('cashierId')),
-    __param(1, (0, common_1.Query)('paymentStatus')),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)('cashierId')),
+    __param(2, (0, common_1.Query)('paymentStatus')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", void 0)
 ], SalesController.prototype, "findAllSales", null);
 __decorate([
     (0, common_1.Get)('invoice/:invoiceNumber'),
     (0, swagger_1.ApiOperation)({ summary: 'Get invoice details by invoice number' }),
     __param(0, (0, common_1.Param)('invoiceNumber')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], SalesController.prototype, "findByInvoice", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get sale details by ID' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], SalesController.prototype, "findOneSale", null);
 exports.SalesController = SalesController = __decorate([

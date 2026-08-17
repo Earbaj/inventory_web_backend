@@ -34,15 +34,17 @@ let SeedService = SeedService_1 = class SeedService {
     }
     async seed() {
         this.logger.log('Starting MongoDB Database Seeding...');
-        const adminEmail = 'admin@shop.com';
-        const existingAdmin = await this.userModel.findOne({ email: adminEmail });
-        if (!existingAdmin) {
-            const passwordHash = await bcrypt.hash('admin123', 10);
+        const superAdminEmail = 'superadmin@keeper.com';
+        const existingSuperAdmin = await this.userModel.findOne({ email: superAdminEmail });
+        if (!existingSuperAdmin) {
+            const passwordHash = await bcrypt.hash('superadmin123', 10);
             await this.userModel.create({
-                name: 'Shop Owner (Admin)',
-                email: adminEmail,
+                name: 'Platform Super Admin',
+                email: superAdminEmail,
                 passwordHash,
-                role: 'admin',
+                role: 'superadmin',
+                subscriptionTier: 'premium',
+                shopId: null,
                 permissions: {
                     canProcessReturn: true,
                     canExportExcel: true,
@@ -50,8 +52,32 @@ let SeedService = SeedService_1 = class SeedService {
                     canViewBuyPrice: true,
                 },
             });
-            this.logger.log(`Created default Admin: ${adminEmail} / admin123`);
+            this.logger.log(`Created default SuperAdmin: ${superAdminEmail} / superadmin123`);
         }
+        const adminEmail = 'admin@shop.com';
+        let adminUser = await this.userModel.findOne({ email: adminEmail });
+        if (!adminUser) {
+            const passwordHash = await bcrypt.hash('admin123', 10);
+            const createdAdmin = new this.userModel({
+                name: 'Shop Owner (Admin)',
+                email: adminEmail,
+                passwordHash,
+                role: 'admin',
+                subscriptionTier: 'free',
+                shopId: null,
+                permissions: {
+                    canProcessReturn: true,
+                    canExportExcel: true,
+                    canEditCustomers: true,
+                    canViewBuyPrice: true,
+                },
+            });
+            adminUser = await createdAdmin.save();
+            adminUser.shopId = adminUser._id.toString();
+            await adminUser.save();
+            this.logger.log(`Created default Admin (Shop Owner): ${adminEmail} / admin123 (Shop ID: ${adminUser.shopId})`);
+        }
+        const shopId = adminUser.shopId || adminUser._id.toString();
         const managerEmail = 'manager@shop.com';
         const existingManager = await this.userModel.findOne({ email: managerEmail });
         if (!existingManager) {
@@ -61,6 +87,8 @@ let SeedService = SeedService_1 = class SeedService {
                 email: managerEmail,
                 passwordHash,
                 role: 'manager',
+                subscriptionTier: 'free',
+                shopId,
                 permissions: {
                     canProcessReturn: false,
                     canExportExcel: true,
@@ -68,18 +96,18 @@ let SeedService = SeedService_1 = class SeedService {
                     canViewBuyPrice: false,
                 },
             });
-            this.logger.log(`Created default Manager: ${managerEmail} / admin123`);
+            this.logger.log(`Created default Manager: ${managerEmail} / admin123 (Linked to Shop ID: ${shopId})`);
         }
-        const categoriesCount = await this.categoryModel.countDocuments();
+        const categoriesCount = await this.categoryModel.countDocuments({ shopId });
         if (categoriesCount === 0) {
             await this.categoryModel.insertMany([
-                { name: 'Electronics', description: 'Computer accessories and gadgets' },
-                { name: 'Stationery', description: 'Office supplies, paper, pens' },
-                { name: 'Groceries', description: 'Daily essential consumer goods' },
+                { name: 'Electronics', description: 'Computer accessories and gadgets', shopId, isDeleted: false },
+                { name: 'Stationery', description: 'Office supplies, paper, pens', shopId, isDeleted: false },
+                { name: 'Groceries', description: 'Daily essential consumer goods', shopId, isDeleted: false },
             ]);
             this.logger.log('Seeded initial Categories');
         }
-        const itemsCount = await this.itemModel.countDocuments();
+        const itemsCount = await this.itemModel.countDocuments({ shopId });
         if (itemsCount === 0) {
             await this.itemModel.insertMany([
                 {
@@ -91,6 +119,8 @@ let SeedService = SeedService_1 = class SeedService {
                     stockQuantity: 45,
                     unit: 'pcs',
                     lowStockThreshold: 5,
+                    shopId,
+                    isDeleted: false,
                 },
                 {
                     name: 'Mechanical Keyboard RGB',
@@ -101,6 +131,8 @@ let SeedService = SeedService_1 = class SeedService {
                     stockQuantity: 15,
                     unit: 'pcs',
                     lowStockThreshold: 3,
+                    shopId,
+                    isDeleted: false,
                 },
                 {
                     name: 'A4 Paper 80GSM Rim',
@@ -111,6 +143,8 @@ let SeedService = SeedService_1 = class SeedService {
                     stockQuantity: 3,
                     unit: 'rim',
                     lowStockThreshold: 10,
+                    shopId,
+                    isDeleted: false,
                 },
                 {
                     name: 'Gel Pen Blue 0.5mm',
@@ -121,11 +155,13 @@ let SeedService = SeedService_1 = class SeedService {
                     stockQuantity: 200,
                     unit: 'pcs',
                     lowStockThreshold: 20,
+                    shopId,
+                    isDeleted: false,
                 },
             ]);
             this.logger.log('Seeded initial Product Catalog items');
         }
-        const customerCount = await this.customerModel.countDocuments();
+        const customerCount = await this.customerModel.countDocuments({ shopId });
         if (customerCount === 0) {
             const cust = await this.customerModel.create({
                 name: 'Rahim Traders',
@@ -133,6 +169,8 @@ let SeedService = SeedService_1 = class SeedService {
                 address: 'Motijheel, Dhaka',
                 openingBalance: 0,
                 closingBalance: 0,
+                shopId,
+                isDeleted: false,
             });
             await this.ledgerModel.create({
                 customerId: cust._id.toString(),
@@ -143,6 +181,8 @@ let SeedService = SeedService_1 = class SeedService {
                 amount: 0,
                 previousBalance: 0,
                 newBalance: 0,
+                shopId,
+                isDeleted: false,
             });
             this.logger.log('Seeded initial Customer record');
         }

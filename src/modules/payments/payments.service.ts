@@ -15,7 +15,11 @@ export class PaymentsService {
   ) {}
 
   async processPayment(processPaymentDto: ProcessPaymentDto, user: any) {
-    const customer = await this.customerModel.findById(processPaymentDto.customerId);
+    const customer = await this.customerModel.findOne({
+      _id: processPaymentDto.customerId,
+      shopId: user.shopId,
+      isDeleted: { $ne: true },
+    });
     if (!customer) {
       throw new NotFoundException('Customer not found');
     }
@@ -34,6 +38,8 @@ export class PaymentsService {
       paymentMethod: processPaymentDto.paymentMethod.toLowerCase(),
       date: new Date(),
       receivedBy: user.uid || user.id,
+      shopId: user.shopId,
+      isDeleted: false,
     });
 
     const savedPayment = await payment.save();
@@ -47,6 +53,8 @@ export class PaymentsService {
       amount,
       previousBalance,
       newBalance,
+      shopId: user.shopId,
+      isDeleted: false,
     });
 
     await ledgerRecord.save();

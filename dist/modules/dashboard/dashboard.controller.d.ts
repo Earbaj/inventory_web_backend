@@ -13,7 +13,17 @@ export declare class DashboardController {
         totalCustomerDue: string;
         totalInvoicesCount: number;
     }>;
-    getSalesReport(startDate?: string, endDate?: string, cashierId?: string): Promise<{
+    getSuperAdminDashboard(user: any): Promise<{
+        totalRegisteredShops: number;
+        totalManagersCount: number;
+        freeTierShopsCount: number;
+        premiumTierShopsCount: number;
+        pendingPaymentRequestsCount: number;
+        totalSubscriptionRevenue: string;
+        platformTotalItems: number;
+        platformTotalSales: number;
+    }>;
+    getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string): Promise<{
         totalRevenue: string;
         totalDiscount: string;
         totalInvoices: number;

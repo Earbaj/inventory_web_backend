@@ -19,16 +19,21 @@ const mongoose_2 = require("mongoose");
 const sale_schema_1 = require("../sales/schemas/sale.schema");
 const item_schema_1 = require("../inventory/schemas/item.schema");
 const customer_schema_1 = require("../customers/schemas/customer.schema");
+const user_schema_1 = require("../auth/schemas/user.schema");
+const subscription_payment_schema_1 = require("../subscriptions/schemas/subscription-payment.schema");
 let DashboardService = class DashboardService {
-    constructor(saleModel, itemModel, customerModel) {
+    constructor(saleModel, itemModel, customerModel, userModel, subscriptionPaymentModel) {
         this.saleModel = saleModel;
         this.itemModel = itemModel;
         this.customerModel = customerModel;
+        this.userModel = userModel;
+        this.subscriptionPaymentModel = subscriptionPaymentModel;
     }
     async getDashboardStats(user) {
-        const sales = await this.saleModel.find().exec();
-        const items = await this.itemModel.find().exec();
-        const customers = await this.customerModel.find().exec();
+        const shopId = user.shopId;
+        const sales = await this.saleModel.find({ shopId, isDeleted: { $ne: true } }).exec();
+        const items = await this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec();
+        const customers = await this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec();
         let totalSalesRevenue = 0;
         let totalPaidCollected = 0;
         let totalDue = 0;
@@ -38,7 +43,7 @@ let DashboardService = class DashboardService {
             totalDue += s.dueAmount;
         }
         let netProfit = 0;
-        const canViewBuy = user.role === 'admin' || user.permissions?.canViewBuyPrice;
+        const canViewBuy = user.role === 'admin' || user.role === 'superadmin' || user.permissions?.canViewBuyPrice;
         if (canViewBuy) {
             const itemsMap = new Map();
             items.forEach(i => itemsMap.set(i._id.toString(), i.buyPrice));
@@ -70,8 +75,8 @@ let DashboardService = class DashboardService {
             totalInvoicesCount: sales.length,
         };
     }
-    async getSalesReport(startDate, endDate, cashierId) {
-        const query = {};
+    async getSalesReport(user, startDate, endDate, cashierId) {
+        const query = { shopId: user.shopId, isDeleted: { $ne: true } };
         if (cashierId)
             query.createdBy = cashierId;
         if (startDate || endDate) {
@@ -118,6 +123,33 @@ let DashboardService = class DashboardService {
             })),
         };
     }
+    async getSuperAdminDashboard(user) {
+        if (user.role !== 'superadmin') {
+            throw new common_1.ForbiddenException('Only SuperAdmin can access platform metrics');
+        }
+        const [totalShops, totalManagers, freeShops, premiumShops, pendingPayments, approvedPayments, totalItems, totalSales] = await Promise.all([
+            this.userModel.countDocuments({ role: 'admin' }),
+            this.userModel.countDocuments({ role: 'manager' }),
+            this.userModel.countDocuments({ role: 'admin', subscriptionTier: 'free' }),
+            this.userModel.countDocuments({ role: 'admin', subscriptionTier: 'premium' }),
+            this.subscriptionPaymentModel.countDocuments({ status: 'pending' }),
+            this.subscriptionPaymentModel.find({ status: 'approved' }).exec(),
+            this.itemModel.countDocuments({ isDeleted: { $ne: true } }),
+            this.saleModel.countDocuments({ isDeleted: { $ne: true } }),
+        ]);
+        let totalSubscriptionRevenue = 0;
+        approvedPayments.forEach(p => totalSubscriptionRevenue += p.amount);
+        return {
+            totalRegisteredShops: totalShops,
+            totalManagersCount: totalManagers,
+            freeTierShopsCount: freeShops,
+            premiumTierShopsCount: premiumShops,
+            pendingPaymentRequestsCount: pendingPayments,
+            totalSubscriptionRevenue: totalSubscriptionRevenue.toString(),
+            platformTotalItems: totalItems,
+            platformTotalSales: totalSales,
+        };
+    }
 };
 exports.DashboardService = DashboardService;
 exports.DashboardService = DashboardService = __decorate([
@@ -125,7 +157,11 @@ exports.DashboardService = DashboardService = __decorate([
     __param(0, (0, mongoose_1.InjectModel)(sale_schema_1.Sale.name)),
     __param(1, (0, mongoose_1.InjectModel)(item_schema_1.Item.name)),
     __param(2, (0, mongoose_1.InjectModel)(customer_schema_1.Customer.name)),
+    __param(3, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
+    __param(4, (0, mongoose_1.InjectModel)(subscription_payment_schema_1.SubscriptionPayment.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model])
 ], DashboardService);

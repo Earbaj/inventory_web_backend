@@ -31,12 +31,25 @@ let SalesService = class SalesService {
         if (!createSaleDto.items || createSaleDto.items.length === 0) {
             throw new common_1.BadRequestException('Sale must contain at least one item');
         }
+        if (user.subscriptionTier === 'free') {
+            const saleCount = await this.saleModel.countDocuments({
+                shopId: user.shopId,
+                isDeleted: { $ne: true },
+            });
+            if (saleCount >= 5) {
+                throw new common_1.BadRequestException('Free tier is limited to 5 sales transactions only. Please upgrade to premium.');
+            }
+        }
         let subtotal = 0;
         const saleItems = [];
         for (const reqItem of createSaleDto.items) {
-            const item = await this.itemModel.findById(reqItem.itemId);
+            const item = await this.itemModel.findOne({
+                _id: reqItem.itemId,
+                shopId: user.shopId,
+                isDeleted: { $ne: true },
+            });
             if (!item) {
-                throw new common_1.NotFoundException(`Item with ID '${reqItem.itemId}' not found`);
+                throw new common_1.NotFoundException(`Item with ID '${reqItem.itemId}' not found in your inventory`);
             }
             if (item.stockQuantity < reqItem.quantity) {
                 throw new common_1.BadRequestException(`Insufficient stock for '${item.name}'. Available: ${item.stockQuantity}, Requested: ${reqItem.quantity}`);
@@ -77,7 +90,7 @@ let SalesService = class SalesService {
         else if (paidAmount > 0) {
             paymentStatus = 'partial';
         }
-        const count = await this.saleModel.countDocuments();
+        const count = await this.saleModel.countDocuments({ shopId: user.shopId });
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const invoiceNumber = `INV-${dateStr}-${(count + 1).toString().padStart(4, '0')}`;
         const customerId = createSaleDto.customerId || 'walk-in';
@@ -85,7 +98,11 @@ let SalesService = class SalesService {
         let customerPhone = createSaleDto.customerPhone || '';
         let customer = null;
         if (customerId !== 'walk-in') {
-            customer = await this.customerModel.findById(customerId);
+            customer = await this.customerModel.findOne({
+                _id: customerId,
+                shopId: user.shopId,
+                isDeleted: { $ne: true },
+            });
             if (customer) {
                 customerName = customer.name;
                 customerPhone = customer.phone;
@@ -107,6 +124,8 @@ let SalesService = class SalesService {
             createdBy: user.uid || user.id,
             createdByName: user.name || 'Cashier',
             isReturned: 'none',
+            shopId: user.shopId,
+            isDeleted: false,
         });
         const savedSale = await sale.save();
         if (customer && customerId !== 'walk-in') {
@@ -124,13 +143,15 @@ let SalesService = class SalesService {
                 amount: -grandTotal,
                 previousBalance: prevBalance,
                 newBalance: newBalance,
+                shopId: user.shopId,
+                isDeleted: false,
             });
             await ledger.save();
         }
         return this.formatSale(savedSale);
     }
-    async findAllSales(cashierId, paymentStatus) {
-        const query = {};
+    async findAllSales(user, cashierId, paymentStatus) {
+        const query = { shopId: user.shopId, isDeleted: { $ne: true } };
         if (cashierId)
             query.createdBy = cashierId;
         if (paymentStatus)
@@ -138,14 +159,14 @@ let SalesService = class SalesService {
         const sales = await this.saleModel.find(query).sort({ createdAt: -1 }).exec();
         return sales.map(s => this.formatSale(s));
     }
-    async findOneSale(id) {
-        const sale = await this.saleModel.findById(id);
+    async findOneSale(id, user) {
+        const sale = await this.saleModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
         if (!sale)
             throw new common_1.NotFoundException('Sale record not found');
         return this.formatSale(sale);
     }
-    async findByInvoice(invoiceNumber) {
-        const sale = await this.saleModel.findOne({ invoiceNumber });
+    async findByInvoice(invoiceNumber, user) {
+        const sale = await this.saleModel.findOne({ invoiceNumber, shopId: user.shopId, isDeleted: { $ne: true } });
         if (!sale)
             throw new common_1.NotFoundException('Invoice not found');
         return this.formatSale(sale);

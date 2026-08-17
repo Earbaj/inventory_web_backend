@@ -66,6 +66,22 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Return.prototype, "processedBy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: String, index: true }),
+    __metadata("design:type", String)
+], Return.prototype, "shopId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: Boolean, default: false, index: true }),
+    __metadata("design:type", Boolean)
+], Return.prototype, "isDeleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], Return.prototype, "deletedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Return.prototype, "deletedBy", void 0);
 exports.Return = Return = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 ], Return);

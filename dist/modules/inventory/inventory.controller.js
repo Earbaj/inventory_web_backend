@@ -41,14 +41,14 @@ let InventoryController = class InventoryController {
     updateStock(id, updateStockDto, user) {
         return this.inventoryService.updateStock(id, updateStockDto, user);
     }
-    removeItem(id) {
-        return this.inventoryService.removeItem(id);
+    removeItem(id, user) {
+        return this.inventoryService.removeItem(id, user);
     }
-    findAllCategories() {
-        return this.inventoryService.findAllCategories();
+    findAllCategories(user) {
+        return this.inventoryService.findAllCategories(user);
     }
-    createCategory(createCategoryDto) {
-        return this.inventoryService.createCategory(createCategoryDto);
+    createCategory(createCategoryDto, user) {
+        return this.inventoryService.createCategory(createCategoryDto, user);
     }
 };
 exports.InventoryController = InventoryController;
@@ -110,25 +110,28 @@ __decorate([
 ], InventoryController.prototype, "updateStock", null);
 __decorate([
     (0, common_1.Delete)('items/:id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete product item' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete product item (Moves to Recycle Bin/Trash)' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "removeItem", null);
 __decorate([
     (0, common_1.Get)('categories'),
     (0, swagger_1.ApiOperation)({ summary: 'List all product categories' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "findAllCategories", null);
 __decorate([
     (0, common_1.Post)('categories'),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new category' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [inventory_dto_1.CreateCategoryDto]),
+    __metadata("design:paramtypes", [inventory_dto_1.CreateCategoryDto, Object]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "createCategory", null);
 exports.InventoryController = InventoryController = __decorate([

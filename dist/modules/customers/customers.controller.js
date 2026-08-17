@@ -20,51 +20,55 @@ const customer_dto_1 = require("./dto/customer.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const permissions_guard_1 = require("../../common/guards/permissions.guard");
 const permissions_decorator_1 = require("../../common/decorators/permissions.decorator");
+const get_user_decorator_1 = require("../../common/decorators/get-user.decorator");
 let CustomersController = class CustomersController {
     constructor(customersService) {
         this.customersService = customersService;
     }
-    create(createCustomerDto) {
-        return this.customersService.create(createCustomerDto);
+    create(createCustomerDto, user) {
+        return this.customersService.create(createCustomerDto, user);
     }
-    findAll() {
-        return this.customersService.findAll();
+    findAll(user) {
+        return this.customersService.findAll(user);
     }
-    findOne(id) {
-        return this.customersService.findOne(id);
+    findOne(id, user) {
+        return this.customersService.findOne(id, user);
     }
-    update(id, updateCustomerDto) {
-        return this.customersService.update(id, updateCustomerDto);
+    update(id, updateCustomerDto, user) {
+        return this.customersService.update(id, updateCustomerDto, user);
     }
-    remove(id) {
-        return this.customersService.remove(id);
+    remove(id, user) {
+        return this.customersService.remove(id, user);
     }
-    getLedger(id) {
-        return this.customersService.getLedger(id);
+    getLedger(id, user) {
+        return this.customersService.getLedger(id, user);
     }
 };
 exports.CustomersController = CustomersController;
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Create new customer' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Create new customer (Max 1 for Free Tier)' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [customer_dto_1.CreateCustomerDto]),
+    __metadata("design:paramtypes", [customer_dto_1.CreateCustomerDto, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List all customers' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all shop customers' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get customer by ID' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "findOne", null);
 __decorate([
@@ -74,26 +78,29 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Update customer info (Requires permission: canEditCustomers)' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, customer_dto_1.UpdateCustomerDto]),
+    __metadata("design:paramtypes", [String, customer_dto_1.UpdateCustomerDto, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "update", null);
 __decorate([
     (0, common_1.UseGuards)(permissions_guard_1.PermissionsGuard),
     (0, permissions_decorator_1.Permissions)('canEditCustomers'),
     (0, common_1.Delete)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete customer' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete customer (Moves to Recycle Bin/Trash)' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "remove", null);
 __decorate([
     (0, common_1.Get)(':id/ledger'),
     (0, swagger_1.ApiOperation)({ summary: 'Get transaction statement ledger for customer' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], CustomersController.prototype, "getLedger", null);
 exports.CustomersController = CustomersController = __decorate([

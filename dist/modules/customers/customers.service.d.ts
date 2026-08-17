@@ -6,7 +6,7 @@ export declare class CustomersService {
     private customerModel;
     private ledgerModel;
     constructor(customerModel: Model<CustomerDocument>, ledgerModel: Model<LedgerDocument>);
-    create(createCustomerDto: CreateCustomerDto): Promise<{
+    create(createCustomerDto: CreateCustomerDto, user: any): Promise<{
         id: string;
         name: string;
         phone: string;
@@ -14,7 +14,7 @@ export declare class CustomersService {
         openingBalance: string;
         closingBalance: string;
     }>;
-    findAll(): Promise<{
+    findAll(user: any): Promise<{
         id: string;
         name: string;
         phone: string;
@@ -22,7 +22,7 @@ export declare class CustomersService {
         openingBalance: string;
         closingBalance: string;
     }[]>;
-    findOne(id: string): Promise<{
+    findOne(id: string, user: any): Promise<{
         id: string;
         name: string;
         phone: string;
@@ -30,7 +30,7 @@ export declare class CustomersService {
         openingBalance: string;
         closingBalance: string;
     }>;
-    update(id: string, updateCustomerDto: UpdateCustomerDto): Promise<{
+    update(id: string, updateCustomerDto: UpdateCustomerDto, user: any): Promise<{
         id: string;
         name: string;
         phone: string;
@@ -38,10 +38,10 @@ export declare class CustomersService {
         openingBalance: string;
         closingBalance: string;
     }>;
-    remove(id: string): Promise<{
+    remove(id: string, user: any): Promise<{
         message: string;
     }>;
-    getLedger(customerId: string): Promise<{
+    getLedger(customerId: string, user: any): Promise<{
         id: string;
         type: string;
         referenceId: string;

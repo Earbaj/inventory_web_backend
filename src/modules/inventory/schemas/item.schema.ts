@@ -28,6 +28,20 @@ export class Item {
 
   @Prop({ required: true, default: 5 })
   lowStockThreshold: number;
+
+  // Multi-Tenancy Shop ID
+  @Prop({ required: true, type: String, index: true })
+  shopId: string;
+
+  // Soft-Delete Recycle Bin Fields
+  @Prop({ required: true, type: Boolean, default: false, index: true })
+  isDeleted: boolean;
+
+  @Prop({ type: Date, default: null })
+  deletedAt: Date;
+
+  @Prop({ type: String, default: null })
+  deletedBy: string;
 }
 
 export const ItemSchema = SchemaFactory.createForClass(Item);

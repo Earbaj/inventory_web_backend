@@ -25,6 +25,15 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
+    setupSuperAdmin(setupDto) {
+        return this.authService.setupSuperAdmin(setupDto);
+    }
+    forgotPassword(forgotDto) {
+        return this.authService.forgotPassword(forgotDto);
+    }
+    resetPassword(resetDto) {
+        return this.authService.resetPassword(resetDto);
+    }
     login(loginDto) {
         return this.authService.login(loginDto);
     }
@@ -34,23 +43,49 @@ let AuthController = class AuthController {
     getProfile(user) {
         return user;
     }
-    getAllUsers() {
-        return this.authService.getAllUsers();
+    getAllUsers(user) {
+        return this.authService.getAllUsers(user);
     }
-    createUser(createUserDto) {
-        return this.authService.createUser(createUserDto);
+    createUser(createUserDto, user) {
+        return this.authService.createUser(createUserDto, user);
     }
-    updateUserPermissions(id, updatePermissionsDto) {
-        return this.authService.updateUserPermissions(id, updatePermissionsDto.permissions);
+    updateUserPermissions(id, updatePermissionsDto, user) {
+        return this.authService.updateUserPermissions(id, updatePermissionsDto.permissions, user);
     }
     changePassword(uid, changePasswordDto) {
         return this.authService.changePassword(uid, changePasswordDto);
     }
-    deleteUser(id) {
-        return this.authService.deleteUser(id);
+    deleteUser(id, user) {
+        return this.authService.deleteUser(id, user);
     }
 };
 exports.AuthController = AuthController;
+__decorate([
+    (0, common_1.Post)('auth/setup-superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'One-time initial SuperAdmin creation (Allowed only if 0 SuperAdmins exist)' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'SuperAdmin created successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'SuperAdmin already exists' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.SetupSuperAdminDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "setupSuperAdmin", null);
+__decorate([
+    (0, common_1.Post)('auth/forgot-password'),
+    (0, swagger_1.ApiOperation)({ summary: 'Request password recovery OTP code sent to user email' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.ForgotPasswordDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "forgotPassword", null);
+__decorate([
+    (0, common_1.Post)('auth/reset-password'),
+    (0, swagger_1.ApiOperation)({ summary: 'Reset password using OTP reset code' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.ResetPasswordDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "resetPassword", null);
 __decorate([
     (0, common_1.Post)('auth/login'),
     (0, swagger_1.ApiOperation)({ summary: 'Login user and get JWT token' }),
@@ -62,7 +97,7 @@ __decorate([
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.Post)('auth/register'),
-    (0, swagger_1.ApiOperation)({ summary: 'Register a new user account' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Register a new Shop Owner (Admin) account' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [auth_dto_1.RegisterDto]),
@@ -80,35 +115,38 @@ __decorate([
 ], AuthController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Get)('users'),
-    (0, swagger_1.ApiOperation)({ summary: 'List all system users (Admin only)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all shop users (Admin/SuperAdmin only)' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "getAllUsers", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Post)('users'),
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new manager or admin user (Admin only)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new manager account (Shop Admin only - Max 1 for Free Tier)' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [auth_dto_1.CreateUserDto]),
+    __metadata("design:paramtypes", [auth_dto_1.CreateUserDto, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "createUser", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Patch)('users/:id/permissions'),
     (0, swagger_1.ApiOperation)({ summary: 'Update manager permissions (Admin only)' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, auth_dto_1.UpdatePermissionsDto]),
+    __metadata("design:paramtypes", [String, auth_dto_1.UpdatePermissionsDto, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "updateUserPermissions", null);
 __decorate([
@@ -124,13 +162,14 @@ __decorate([
 ], AuthController.prototype, "changePassword", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Delete)('users/:id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete user account (Admin only)' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "deleteUser", null);
 exports.AuthController = AuthController = __decorate([

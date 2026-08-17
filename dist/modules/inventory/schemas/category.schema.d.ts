@@ -3,6 +3,10 @@ export type CategoryDocument = Category & Document;
 export declare class Category {
     name: string;
     description: string;
+    shopId: string;
+    isDeleted: boolean;
+    deletedAt: Date;
+    deletedBy: string;
 }
 export declare const CategorySchema: import("mongoose").Schema<Category, import("mongoose").Model<Category, any, any, any, Document<unknown, any, Category, any, {}> & Category & {
     _id: import("mongoose").Types.ObjectId;

@@ -23,7 +23,16 @@ let CustomersService = class CustomersService {
         this.customerModel = customerModel;
         this.ledgerModel = ledgerModel;
     }
-    async create(createCustomerDto) {
+    async create(createCustomerDto, user) {
+        if (user.subscriptionTier === 'free') {
+            const activeCustomerCount = await this.customerModel.countDocuments({
+                shopId: user.shopId,
+                isDeleted: { $ne: true },
+            });
+            if (activeCustomerCount >= 1) {
+                throw new common_1.BadRequestException('Free tier is limited to 1 customer only. Please upgrade to premium.');
+            }
+        }
         const openingBalance = createCustomerDto.openingBalance || 0;
         const customer = new this.customerModel({
             name: createCustomerDto.name,
@@ -31,6 +40,8 @@ let CustomersService = class CustomersService {
             address: createCustomerDto.address || '',
             openingBalance,
             closingBalance: openingBalance,
+            shopId: user.shopId,
+            isDeleted: false,
         });
         const saved = await customer.save();
         const ledger = new this.ledgerModel({
@@ -42,22 +53,34 @@ let CustomersService = class CustomersService {
             amount: openingBalance,
             previousBalance: 0,
             newBalance: openingBalance,
+            shopId: user.shopId,
+            isDeleted: false,
         });
         await ledger.save();
         return this.formatCustomer(saved);
     }
-    async findAll() {
-        const customers = await this.customerModel.find().exec();
+    async findAll(user) {
+        const customers = await this.customerModel
+            .find({ shopId: user.shopId, isDeleted: { $ne: true } })
+            .exec();
         return customers.map(c => this.formatCustomer(c));
     }
-    async findOne(id) {
-        const customer = await this.customerModel.findById(id);
+    async findOne(id, user) {
+        const customer = await this.customerModel.findOne({
+            _id: id,
+            shopId: user.shopId,
+            isDeleted: { $ne: true },
+        });
         if (!customer)
             throw new common_1.NotFoundException('Customer not found');
         return this.formatCustomer(customer);
     }
-    async update(id, updateCustomerDto) {
-        const customer = await this.customerModel.findById(id);
+    async update(id, updateCustomerDto, user) {
+        const customer = await this.customerModel.findOne({
+            _id: id,
+            shopId: user.shopId,
+            isDeleted: { $ne: true },
+        });
         if (!customer)
             throw new common_1.NotFoundException('Customer not found');
         if (updateCustomerDto.name !== undefined)
@@ -69,18 +92,33 @@ let CustomersService = class CustomersService {
         await customer.save();
         return this.formatCustomer(customer);
     }
-    async remove(id) {
-        const customer = await this.customerModel.findByIdAndDelete(id);
+    async remove(id, user) {
+        const customer = await this.customerModel.findOne({
+            _id: id,
+            shopId: user.shopId,
+            isDeleted: { $ne: true },
+        });
         if (!customer)
             throw new common_1.NotFoundException('Customer not found');
-        await this.ledgerModel.deleteMany({ customerId: id });
-        return { message: 'Customer and ledger records deleted successfully' };
+        customer.isDeleted = true;
+        customer.deletedAt = new Date();
+        customer.deletedBy = user.uid || user.id;
+        await customer.save();
+        await this.ledgerModel.updateMany({ customerId: id, shopId: user.shopId }, { isDeleted: true, deletedAt: new Date(), deletedBy: user.uid || user.id });
+        return { message: 'Customer moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
     }
-    async getLedger(customerId) {
-        const customer = await this.customerModel.findById(customerId);
+    async getLedger(customerId, user) {
+        const customer = await this.customerModel.findOne({
+            _id: customerId,
+            shopId: user.shopId,
+            isDeleted: { $ne: true },
+        });
         if (!customer)
             throw new common_1.NotFoundException('Customer not found');
-        const records = await this.ledgerModel.find({ customerId }).sort({ date: 1 }).exec();
+        const records = await this.ledgerModel
+            .find({ customerId, shopId: user.shopId, isDeleted: { $ne: true } })
+            .sort({ date: 1 })
+            .exec();
         return records.map(r => ({
             id: r._id.toString(),
             type: r.type,

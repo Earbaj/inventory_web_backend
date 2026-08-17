@@ -15,13 +15,29 @@ let Category = class Category {
 };
 exports.Category = Category;
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, unique: true, trim: true }),
+    (0, mongoose_1.Prop)({ required: true, trim: true }),
     __metadata("design:type", String)
 ], Category.prototype, "name", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ default: '', trim: true }),
     __metadata("design:type", String)
 ], Category.prototype, "description", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: String, index: true }),
+    __metadata("design:type", String)
+], Category.prototype, "shopId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: Boolean, default: false, index: true }),
+    __metadata("design:type", Boolean)
+], Category.prototype, "isDeleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], Category.prototype, "deletedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Category.prototype, "deletedBy", void 0);
 exports.Category = Category = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 ], Category);

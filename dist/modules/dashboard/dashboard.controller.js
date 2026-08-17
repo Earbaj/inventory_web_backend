@@ -25,8 +25,11 @@ let DashboardController = class DashboardController {
     getDashboardStats(user) {
         return this.dashboardService.getDashboardStats(user);
     }
-    getSalesReport(startDate, endDate, cashierId) {
-        return this.dashboardService.getSalesReport(startDate, endDate, cashierId);
+    getSuperAdminDashboard(user) {
+        return this.dashboardService.getSuperAdminDashboard(user);
+    }
+    getSalesReport(user, startDate, endDate, cashierId) {
+        return this.dashboardService.getSalesReport(user, startDate, endDate, cashierId);
     }
 };
 exports.DashboardController = DashboardController;
@@ -39,16 +42,25 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], DashboardController.prototype, "getDashboardStats", null);
 __decorate([
+    (0, common_1.Get)('dashboard/superadmin'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get SuperAdmin platform overview metrics (Shops count, Revenue, Pending Payments)' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], DashboardController.prototype, "getSuperAdminDashboard", null);
+__decorate([
     (0, common_1.Get)('reports/sales'),
     (0, swagger_1.ApiOperation)({ summary: 'Get aggregated sales report filtered by date range and cashier' }),
     (0, swagger_1.ApiQuery)({ name: 'startDate', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'endDate', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'cashierId', required: false }),
-    __param(0, (0, common_1.Query)('startDate')),
-    __param(1, (0, common_1.Query)('endDate')),
-    __param(2, (0, common_1.Query)('cashierId')),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)('startDate')),
+    __param(2, (0, common_1.Query)('endDate')),
+    __param(3, (0, common_1.Query)('cashierId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", void 0)
 ], DashboardController.prototype, "getSalesReport", null);
 exports.DashboardController = DashboardController = __decorate([

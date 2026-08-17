@@ -29,7 +29,7 @@ export declare class SalesController {
         createdByName: string;
         isReturned: string;
     }>;
-    findAllSales(cashierId?: string, paymentStatus?: string): Promise<{
+    findAllSales(user: any, cashierId?: string, paymentStatus?: string): Promise<{
         id: string;
         invoiceNumber: string;
         customerId: string;
@@ -55,7 +55,7 @@ export declare class SalesController {
         createdByName: string;
         isReturned: string;
     }[]>;
-    findByInvoice(invoiceNumber: string): Promise<{
+    findByInvoice(invoiceNumber: string, user: any): Promise<{
         id: string;
         invoiceNumber: string;
         customerId: string;
@@ -81,7 +81,7 @@ export declare class SalesController {
         createdByName: string;
         isReturned: string;
     }>;
-    findOneSale(id: string): Promise<{
+    findOneSale(id: string, user: any): Promise<{
         id: string;
         invoiceNumber: string;
         customerId: string;

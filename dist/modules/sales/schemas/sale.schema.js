@@ -50,7 +50,7 @@ let Sale = class Sale {
 };
 exports.Sale = Sale;
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    (0, mongoose_1.Prop)({ required: true, index: true }),
     __metadata("design:type", String)
 ], Sale.prototype, "invoiceNumber", void 0);
 __decorate([
@@ -109,6 +109,22 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true, enum: ['none', 'partially_returned', 'fully_returned'], default: 'none' }),
     __metadata("design:type", String)
 ], Sale.prototype, "isReturned", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: String, index: true }),
+    __metadata("design:type", String)
+], Sale.prototype, "shopId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: Boolean, default: false, index: true }),
+    __metadata("design:type", Boolean)
+], Sale.prototype, "isDeleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], Sale.prototype, "deletedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Sale.prototype, "deletedBy", void 0);
 exports.Sale = Sale = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 ], Sale);

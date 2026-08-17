@@ -2,11 +2,15 @@ import { Model } from 'mongoose';
 import { SaleDocument } from '../sales/schemas/sale.schema';
 import { ItemDocument } from '../inventory/schemas/item.schema';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { UserDocument } from '../auth/schemas/user.schema';
+import { SubscriptionPayment } from '../subscriptions/schemas/subscription-payment.schema';
 export declare class DashboardService {
     private saleModel;
     private itemModel;
     private customerModel;
-    constructor(saleModel: Model<SaleDocument>, itemModel: Model<ItemDocument>, customerModel: Model<CustomerDocument>);
+    private userModel;
+    private subscriptionPaymentModel;
+    constructor(saleModel: Model<SaleDocument>, itemModel: Model<ItemDocument>, customerModel: Model<CustomerDocument>, userModel: Model<UserDocument>, subscriptionPaymentModel: Model<SubscriptionPayment>);
     getDashboardStats(user: any): Promise<{
         totalSalesRevenue: string;
         totalPaidCollected: string;
@@ -18,7 +22,7 @@ export declare class DashboardService {
         totalCustomerDue: string;
         totalInvoicesCount: number;
     }>;
-    getSalesReport(startDate?: string, endDate?: string, cashierId?: string): Promise<{
+    getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string): Promise<{
         totalRevenue: string;
         totalDiscount: string;
         totalInvoices: number;
@@ -38,5 +42,15 @@ export declare class DashboardService {
             date: Date;
             createdByName: string;
         }[];
+    }>;
+    getSuperAdminDashboard(user: any): Promise<{
+        totalRegisteredShops: number;
+        totalManagersCount: number;
+        freeTierShopsCount: number;
+        premiumTierShopsCount: number;
+        pendingPaymentRequestsCount: number;
+        totalSubscriptionRevenue: string;
+        platformTotalItems: number;
+        platformTotalSales: number;
     }>;
 }

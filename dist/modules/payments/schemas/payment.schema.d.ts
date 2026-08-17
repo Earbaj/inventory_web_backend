@@ -6,6 +6,10 @@ export declare class Payment {
     paymentMethod: string;
     date: Date;
     receivedBy: string;
+    shopId: string;
+    isDeleted: boolean;
+    deletedAt: Date;
+    deletedBy: string;
 }
 export declare const PaymentSchema: MongooseSchema<Payment, import("mongoose").Model<Payment, any, any, any, Document<unknown, any, Payment, any, {}> & Payment & {
     _id: import("mongoose").Types.ObjectId;

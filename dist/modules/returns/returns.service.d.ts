@@ -22,7 +22,7 @@ export declare class ReturnsService {
         date: Date;
         processedBy: string;
     }>;
-    findAllReturns(): Promise<{
+    findAllReturns(user: any): Promise<{
         id: string;
         customerId: string;
         saleId: string;

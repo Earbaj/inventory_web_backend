@@ -11,6 +11,8 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const serve_static_1 = require("@nestjs/serve-static");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
 const path_1 = require("path");
 const auth_module_1 = require("./modules/auth/auth.module");
 const customers_module_1 = require("./modules/customers/customers.module");
@@ -19,6 +21,8 @@ const sales_module_1 = require("./modules/sales/sales.module");
 const payments_module_1 = require("./modules/payments/payments.module");
 const returns_module_1 = require("./modules/returns/returns.module");
 const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
+const subscriptions_module_1 = require("./modules/subscriptions/subscriptions.module");
+const trash_module_1 = require("./modules/trash/trash.module");
 const seed_module_1 = require("./modules/seed/seed.module");
 let AppModule = class AppModule {
 };
@@ -30,6 +34,10 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: ['.env', '.env.example'],
             }),
+            throttler_1.ThrottlerModule.forRoot([{
+                    ttl: 60000,
+                    limit: Number(process.env.THROTTLE_LIMIT) || 20,
+                }]),
             mongoose_1.MongooseModule.forRootAsync({
                 useFactory: () => ({
                     uri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/keeper_pos',
@@ -46,7 +54,15 @@ exports.AppModule = AppModule = __decorate([
             payments_module_1.PaymentsModule,
             returns_module_1.ReturnsModule,
             dashboard_module_1.DashboardModule,
+            subscriptions_module_1.SubscriptionsModule,
+            trash_module_1.TrashModule,
             seed_module_1.SeedModule,
+        ],
+        providers: [
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
         ],
     })
 ], AppModule);

@@ -9,6 +9,10 @@ export declare class Item {
     stockQuantity: number;
     unit: string;
     lowStockThreshold: number;
+    shopId: string;
+    isDeleted: boolean;
+    deletedAt: Date;
+    deletedBy: string;
 }
 export declare const ItemSchema: import("mongoose").Schema<Item, import("mongoose").Model<Item, any, any, any, Document<unknown, any, Item, any, {}> & Item & {
     _id: import("mongoose").Types.ObjectId;

@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Sale, SaleDocument } from '../sales/schemas/sale.schema';
 import { Item, ItemDocument } from '../inventory/schemas/item.schema';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
+import { User, UserDocument } from '../auth/schemas/user.schema';
+import { SubscriptionPayment, SubscriptionPaymentSchema } from '../subscriptions/schemas/subscription-payment.schema';
 
 @Injectable()
 export class DashboardService {
@@ -11,12 +13,15 @@ export class DashboardService {
     @InjectModel(Sale.name) private saleModel: Model<SaleDocument>,
     @InjectModel(Item.name) private itemModel: Model<ItemDocument>,
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(SubscriptionPayment.name) private subscriptionPaymentModel: Model<SubscriptionPayment>,
   ) {}
 
   async getDashboardStats(user: any) {
-    const sales = await this.saleModel.find().exec();
-    const items = await this.itemModel.find().exec();
-    const customers = await this.customerModel.find().exec();
+    const shopId = user.shopId;
+    const sales = await this.saleModel.find({ shopId, isDeleted: { $ne: true } }).exec();
+    const items = await this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec();
+    const customers = await this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec();
 
     let totalSalesRevenue = 0;
     let totalPaidCollected = 0;
@@ -30,7 +35,7 @@ export class DashboardService {
 
     // Profit Calculation (Admin or user with canViewBuyPrice permission)
     let netProfit = 0;
-    const canViewBuy = user.role === 'admin' || user.permissions?.canViewBuyPrice;
+    const canViewBuy = user.role === 'admin' || user.role === 'superadmin' || user.permissions?.canViewBuyPrice;
     
     if (canViewBuy) {
       const itemsMap = new Map<string, number>();
@@ -69,8 +74,8 @@ export class DashboardService {
     };
   }
 
-  async getSalesReport(startDate?: string, endDate?: string, cashierId?: string) {
-    const query: any = {};
+  async getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string) {
+    const query: any = { shopId: user.shopId, isDeleted: { $ne: true } };
     if (cashierId) query.createdBy = cashierId;
 
     if (startDate || endDate) {
@@ -119,6 +124,40 @@ export class DashboardService {
         date: s.date,
         createdByName: s.createdByName,
       })),
+    };
+  }
+
+  /**
+   * Platform Overview Metrics for SuperAdmin
+   */
+  async getSuperAdminDashboard(user: any) {
+    if (user.role !== 'superadmin') {
+      throw new ForbiddenException('Only SuperAdmin can access platform metrics');
+    }
+
+    const [totalShops, totalManagers, freeShops, premiumShops, pendingPayments, approvedPayments, totalItems, totalSales] = await Promise.all([
+      this.userModel.countDocuments({ role: 'admin' }),
+      this.userModel.countDocuments({ role: 'manager' }),
+      this.userModel.countDocuments({ role: 'admin', subscriptionTier: 'free' }),
+      this.userModel.countDocuments({ role: 'admin', subscriptionTier: 'premium' }),
+      this.subscriptionPaymentModel.countDocuments({ status: 'pending' }),
+      this.subscriptionPaymentModel.find({ status: 'approved' }).exec(),
+      this.itemModel.countDocuments({ isDeleted: { $ne: true } }),
+      this.saleModel.countDocuments({ isDeleted: { $ne: true } }),
+    ]);
+
+    let totalSubscriptionRevenue = 0;
+    approvedPayments.forEach(p => totalSubscriptionRevenue += p.amount);
+
+    return {
+      totalRegisteredShops: totalShops,
+      totalManagersCount: totalManagers,
+      freeTierShopsCount: freeShops,
+      premiumTierShopsCount: premiumShops,
+      pendingPaymentRequestsCount: pendingPayments,
+      totalSubscriptionRevenue: totalSubscriptionRevenue.toString(),
+      platformTotalItems: totalItems,
+      platformTotalSales: totalSales,
     };
   }
 }

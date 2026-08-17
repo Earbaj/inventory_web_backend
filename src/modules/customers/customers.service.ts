@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
@@ -12,7 +12,20 @@ export class CustomersService {
     @InjectModel(Ledger.name) private ledgerModel: Model<LedgerDocument>,
   ) {}
 
-  async create(createCustomerDto: CreateCustomerDto) {
+  async create(createCustomerDto: CreateCustomerDto, user: any) {
+    // Check Free Tier Customer Limit (Max 1 Customer for Free Tier)
+    if (user.subscriptionTier === 'free') {
+      const activeCustomerCount = await this.customerModel.countDocuments({
+        shopId: user.shopId,
+        isDeleted: { $ne: true },
+      });
+      if (activeCustomerCount >= 1) {
+        throw new BadRequestException(
+          'Free tier is limited to 1 customer only. Please upgrade to premium.'
+        );
+      }
+    }
+
     const openingBalance = createCustomerDto.openingBalance || 0;
     const customer = new this.customerModel({
       name: createCustomerDto.name,
@@ -20,6 +33,8 @@ export class CustomersService {
       address: createCustomerDto.address || '',
       openingBalance,
       closingBalance: openingBalance,
+      shopId: user.shopId,
+      isDeleted: false,
     });
 
     const saved = await customer.save();
@@ -34,6 +49,8 @@ export class CustomersService {
       amount: openingBalance,
       previousBalance: 0,
       newBalance: openingBalance,
+      shopId: user.shopId,
+      isDeleted: false,
     });
 
     await ledger.save();
@@ -41,19 +58,29 @@ export class CustomersService {
     return this.formatCustomer(saved);
   }
 
-  async findAll() {
-    const customers = await this.customerModel.find().exec();
+  async findAll(user: any) {
+    const customers = await this.customerModel
+      .find({ shopId: user.shopId, isDeleted: { $ne: true } })
+      .exec();
     return customers.map(c => this.formatCustomer(c));
   }
 
-  async findOne(id: string) {
-    const customer = await this.customerModel.findById(id);
+  async findOne(id: string, user: any) {
+    const customer = await this.customerModel.findOne({
+      _id: id,
+      shopId: user.shopId,
+      isDeleted: { $ne: true },
+    });
     if (!customer) throw new NotFoundException('Customer not found');
     return this.formatCustomer(customer);
   }
 
-  async update(id: string, updateCustomerDto: UpdateCustomerDto) {
-    const customer = await this.customerModel.findById(id);
+  async update(id: string, updateCustomerDto: UpdateCustomerDto, user: any) {
+    const customer = await this.customerModel.findOne({
+      _id: id,
+      shopId: user.shopId,
+      isDeleted: { $ne: true },
+    });
     if (!customer) throw new NotFoundException('Customer not found');
 
     if (updateCustomerDto.name !== undefined) customer.name = updateCustomerDto.name;
@@ -64,18 +91,42 @@ export class CustomersService {
     return this.formatCustomer(customer);
   }
 
-  async remove(id: string) {
-    const customer = await this.customerModel.findByIdAndDelete(id);
+  async remove(id: string, user: any) {
+    const customer = await this.customerModel.findOne({
+      _id: id,
+      shopId: user.shopId,
+      isDeleted: { $ne: true },
+    });
     if (!customer) throw new NotFoundException('Customer not found');
-    await this.ledgerModel.deleteMany({ customerId: id });
-    return { message: 'Customer and ledger records deleted successfully' };
+
+    // Perform Soft-Delete (Move to Recycle Bin)
+    customer.isDeleted = true;
+    customer.deletedAt = new Date();
+    customer.deletedBy = user.uid || user.id;
+    await customer.save();
+
+    // Soft-delete associated ledger records
+    await this.ledgerModel.updateMany(
+      { customerId: id, shopId: user.shopId },
+      { isDeleted: true, deletedAt: new Date(), deletedBy: user.uid || user.id }
+    );
+
+    return { message: 'Customer moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
   }
 
-  async getLedger(customerId: string) {
-    const customer = await this.customerModel.findById(customerId);
+  async getLedger(customerId: string, user: any) {
+    const customer = await this.customerModel.findOne({
+      _id: customerId,
+      shopId: user.shopId,
+      isDeleted: { $ne: true },
+    });
     if (!customer) throw new NotFoundException('Customer not found');
 
-    const records = await this.ledgerModel.find({ customerId }).sort({ date: 1 }).exec();
+    const records = await this.ledgerModel
+      .find({ customerId, shopId: user.shopId, isDeleted: { $ne: true } })
+      .sort({ date: 1 })
+      .exec();
+
     return records.map(r => ({
       id: r._id.toString(),
       type: r.type,

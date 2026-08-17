@@ -29,6 +29,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       name: user.name,
       role: user.role,
       permissions: user.permissions,
+      shopId: user.shopId || user._id.toString(),
+      subscriptionTier: user.subscriptionTier || 'free',
+      subscriptionExpiresAt: user.subscriptionExpiresAt || null,
     };
   }
 }

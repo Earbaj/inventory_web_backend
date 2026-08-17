@@ -31,7 +31,7 @@ export const SaleItemEmbeddedSchema = SchemaFactory.createForClass(SaleItemEmbed
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Sale {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, index: true })
   invoiceNumber: string;
 
   @Prop({ required: true, default: 'walk-in' })
@@ -75,6 +75,20 @@ export class Sale {
 
   @Prop({ required: true, enum: ['none', 'partially_returned', 'fully_returned'], default: 'none' })
   isReturned: string;
+
+  // Multi-Tenancy Shop ID
+  @Prop({ required: true, type: String, index: true })
+  shopId: string;
+
+  // Soft-Delete Recycle Bin Fields
+  @Prop({ required: true, type: Boolean, default: false, index: true })
+  isDeleted: boolean;
+
+  @Prop({ type: Date, default: null })
+  deletedAt: Date;
+
+  @Prop({ type: String, default: null })
+  deletedBy: string;
 }
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);

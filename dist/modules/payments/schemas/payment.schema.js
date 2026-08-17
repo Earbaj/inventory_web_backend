@@ -35,6 +35,22 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Payment.prototype, "receivedBy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: String, index: true }),
+    __metadata("design:type", String)
+], Payment.prototype, "shopId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: Boolean, default: false, index: true }),
+    __metadata("design:type", Boolean)
+], Payment.prototype, "isDeleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Date)
+], Payment.prototype, "deletedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: null }),
+    __metadata("design:type", String)
+], Payment.prototype, "deletedBy", void 0);
 exports.Payment = Payment = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 ], Payment);

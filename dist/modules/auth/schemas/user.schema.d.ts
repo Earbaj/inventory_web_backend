@@ -20,6 +20,11 @@ export declare class User {
     passwordHash: string;
     name: string;
     role: string;
+    subscriptionTier: string;
+    subscriptionExpiresAt: Date;
+    shopId: string;
+    resetPasswordCode: string;
+    resetPasswordExpiresAt: Date;
     permissions: ManagerPermissions;
 }
 export declare const UserSchema: import("mongoose").Schema<User, import("mongoose").Model<User, any, any, any, Document<unknown, any, User, any, {}> & User & {

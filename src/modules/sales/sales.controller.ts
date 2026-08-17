@@ -23,21 +23,22 @@ export class SalesController {
   @ApiQuery({ name: 'cashierId', required: false })
   @ApiQuery({ name: 'paymentStatus', required: false })
   findAllSales(
+    @GetUser() user: any,
     @Query('cashierId') cashierId?: string,
     @Query('paymentStatus') paymentStatus?: string,
   ) {
-    return this.salesService.findAllSales(cashierId, paymentStatus);
+    return this.salesService.findAllSales(user, cashierId, paymentStatus);
   }
 
   @Get('invoice/:invoiceNumber')
   @ApiOperation({ summary: 'Get invoice details by invoice number' })
-  findByInvoice(@Param('invoiceNumber') invoiceNumber: string) {
-    return this.salesService.findByInvoice(invoiceNumber);
+  findByInvoice(@Param('invoiceNumber') invoiceNumber: string, @GetUser() user: any) {
+    return this.salesService.findByInvoice(invoiceNumber, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get sale details by ID' })
-  findOneSale(@Param('id') id: string) {
-    return this.salesService.findOneSale(id);
+  findOneSale(@Param('id') id: string, @GetUser() user: any) {
+    return this.salesService.findOneSale(id, user);
   }
 }

@@ -90,15 +90,15 @@ export declare class InventoryService {
         reorderLevel: number;
         isLowStock: boolean;
     }>;
-    removeItem(id: string): Promise<{
+    removeItem(id: string, user: any): Promise<{
         message: string;
     }>;
-    createCategory(createCategoryDto: CreateCategoryDto): Promise<{
+    createCategory(createCategoryDto: CreateCategoryDto, user: any): Promise<{
         id: string;
         name: string;
         description: string;
     }>;
-    findAllCategories(): Promise<{
+    findAllCategories(user: any): Promise<{
         id: string;
         name: string;
         description: string;

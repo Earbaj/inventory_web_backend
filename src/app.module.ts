@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
 
 import { AuthModule } from './modules/auth/auth.module';
@@ -11,6 +13,8 @@ import { SalesModule } from './modules/sales/sales.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ReturnsModule } from './modules/returns/returns.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { TrashModule } from './modules/trash/trash.module';
 import { SeedModule } from './modules/seed/seed.module';
 
 @Module({
@@ -19,6 +23,10 @@ import { SeedModule } from './modules/seed/seed.module';
       isGlobal: true,
       envFilePath: ['.env', '.env.example'],
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minute window
+      limit: Number(process.env.THROTTLE_LIMIT) || 20, // Max 20 requests per minute
+    }]),
     MongooseModule.forRootAsync({
       useFactory: () => ({
         uri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/keeper_pos',
@@ -35,7 +43,15 @@ import { SeedModule } from './modules/seed/seed.module';
     PaymentsModule,
     ReturnsModule,
     DashboardModule,
+    SubscriptionsModule,
+    TrashModule,
     SeedModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

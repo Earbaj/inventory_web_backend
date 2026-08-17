@@ -58,20 +58,20 @@ export class InventoryController {
   }
 
   @Delete('items/:id')
-  @ApiOperation({ summary: 'Delete product item' })
-  removeItem(@Param('id') id: string) {
-    return this.inventoryService.removeItem(id);
+  @ApiOperation({ summary: 'Delete product item (Moves to Recycle Bin/Trash)' })
+  removeItem(@Param('id') id: string, @GetUser() user: any) {
+    return this.inventoryService.removeItem(id, user);
   }
 
   @Get('categories')
   @ApiOperation({ summary: 'List all product categories' })
-  findAllCategories() {
-    return this.inventoryService.findAllCategories();
+  findAllCategories(@GetUser() user: any) {
+    return this.inventoryService.findAllCategories(user);
   }
 
   @Post('categories')
   @ApiOperation({ summary: 'Create a new category' })
-  createCategory(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.inventoryService.createCategory(createCategoryDto);
+  createCategory(@Body() createCategoryDto: CreateCategoryDto, @GetUser() user: any) {
+    return this.inventoryService.createCategory(createCategoryDto, user);
   }
 }

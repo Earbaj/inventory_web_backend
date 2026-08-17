@@ -40,6 +40,9 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             name: user.name,
             role: user.role,
             permissions: user.permissions,
+            shopId: user.shopId || user._id.toString(),
+            subscriptionTier: user.subscriptionTier || 'free',
+            subscriptionExpiresAt: user.subscriptionExpiresAt || null,
         };
     }
 };

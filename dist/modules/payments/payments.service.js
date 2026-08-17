@@ -26,7 +26,11 @@ let PaymentsService = class PaymentsService {
         this.ledgerModel = ledgerModel;
     }
     async processPayment(processPaymentDto, user) {
-        const customer = await this.customerModel.findById(processPaymentDto.customerId);
+        const customer = await this.customerModel.findOne({
+            _id: processPaymentDto.customerId,
+            shopId: user.shopId,
+            isDeleted: { $ne: true },
+        });
         if (!customer) {
             throw new common_1.NotFoundException('Customer not found');
         }
@@ -41,6 +45,8 @@ let PaymentsService = class PaymentsService {
             paymentMethod: processPaymentDto.paymentMethod.toLowerCase(),
             date: new Date(),
             receivedBy: user.uid || user.id,
+            shopId: user.shopId,
+            isDeleted: false,
         });
         const savedPayment = await payment.save();
         const ledgerRecord = new this.ledgerModel({
@@ -52,6 +58,8 @@ let PaymentsService = class PaymentsService {
             amount,
             previousBalance,
             newBalance,
+            shopId: user.shopId,
+            isDeleted: false,
         });
         await ledgerRecord.save();
         return {

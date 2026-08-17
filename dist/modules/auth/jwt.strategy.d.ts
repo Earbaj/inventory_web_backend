@@ -15,6 +15,9 @@ export declare class JwtStrategy extends JwtStrategy_base {
         name: string;
         role: string;
         permissions: import("./schemas/user.schema").ManagerPermissions;
+        shopId: string;
+        subscriptionTier: string;
+        subscriptionExpiresAt: Date;
     }>;
 }
 export {};

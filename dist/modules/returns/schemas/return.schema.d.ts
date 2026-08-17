@@ -23,6 +23,10 @@ export declare class Return {
     totalRefund: number;
     date: Date;
     processedBy: string;
+    shopId: string;
+    isDeleted: boolean;
+    deletedAt: Date;
+    deletedBy: string;
 }
 export declare const ReturnSchema: MongooseSchema<Return, import("mongoose").Model<Return, any, any, any, Document<unknown, any, Return, any, {}> & Return & {
     _id: import("mongoose").Types.ObjectId;

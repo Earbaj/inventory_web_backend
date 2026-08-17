@@ -24,6 +24,15 @@ let InventoryService = class InventoryService {
         this.categoryModel = categoryModel;
     }
     async createItem(createItemDto, user) {
+        if (user.subscriptionTier === 'free') {
+            const itemCount = await this.itemModel.countDocuments({
+                shopId: user.shopId,
+                isDeleted: { $ne: true },
+            });
+            if (itemCount >= 5) {
+                throw new common_1.BadRequestException('Free tier is limited to 5 inventory items only. Please upgrade to premium.');
+            }
+        }
         const item = new this.itemModel({
             name: createItemDto.name,
             sku: createItemDto.sku || '',
@@ -33,30 +42,32 @@ let InventoryService = class InventoryService {
             stockQuantity: createItemDto.stockQuantity,
             unit: createItemDto.unit || 'pcs',
             lowStockThreshold: createItemDto.lowStockThreshold ?? 5,
+            shopId: user.shopId,
+            isDeleted: false,
         });
         const saved = await item.save();
         return this.formatItem(saved, user);
     }
     async findAllItems(user, category) {
-        const query = {};
+        const query = { shopId: user.shopId, isDeleted: { $ne: true } };
         if (category)
             query.category = category;
         const items = await this.itemModel.find(query).exec();
         return items.map(item => this.formatItem(item, user));
     }
     async findLowStockItems(user) {
-        const items = await this.itemModel.find().exec();
+        const items = await this.itemModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
         const lowStock = items.filter(i => i.stockQuantity <= i.lowStockThreshold);
         return lowStock.map(item => this.formatItem(item, user));
     }
     async findOneItem(id, user) {
-        const item = await this.itemModel.findById(id);
+        const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
         if (!item)
             throw new common_1.NotFoundException('Item not found');
         return this.formatItem(item, user);
     }
     async updateItem(id, updateItemDto, user) {
-        const item = await this.itemModel.findById(id);
+        const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
         if (!item)
             throw new common_1.NotFoundException('Item not found');
         if (updateItemDto.name !== undefined)
@@ -80,26 +91,36 @@ let InventoryService = class InventoryService {
         return this.formatItem(item, user);
     }
     async updateStock(id, updateStockDto, user) {
-        const item = await this.itemModel.findById(id);
+        const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
         if (!item)
             throw new common_1.NotFoundException('Item not found');
         item.stockQuantity = Math.max(0, item.stockQuantity + updateStockDto.adjustment);
         await item.save();
         return this.formatItem(item, user);
     }
-    async removeItem(id) {
-        const item = await this.itemModel.findByIdAndDelete(id);
+    async removeItem(id, user) {
+        const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
         if (!item)
             throw new common_1.NotFoundException('Item not found');
-        return { message: 'Item deleted successfully' };
+        item.isDeleted = true;
+        item.deletedAt = new Date();
+        item.deletedBy = user.uid || user.id;
+        await item.save();
+        return { message: 'Item moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
     }
-    async createCategory(createCategoryDto) {
-        const existing = await this.categoryModel.findOne({ name: createCategoryDto.name.trim() });
+    async createCategory(createCategoryDto, user) {
+        const existing = await this.categoryModel.findOne({
+            shopId: user.shopId,
+            name: createCategoryDto.name.trim(),
+            isDeleted: { $ne: true },
+        });
         if (existing)
-            throw new common_1.ConflictException('Category already exists');
+            throw new common_1.ConflictException('Category already exists in your shop');
         const cat = new this.categoryModel({
             name: createCategoryDto.name.trim(),
             description: createCategoryDto.description || '',
+            shopId: user.shopId,
+            isDeleted: false,
         });
         const saved = await cat.save();
         return {
@@ -108,8 +129,8 @@ let InventoryService = class InventoryService {
             description: saved.description,
         };
     }
-    async findAllCategories() {
-        const categories = await this.categoryModel.find().exec();
+    async findAllCategories(user) {
+        const categories = await this.categoryModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
         return categories.map(c => ({
             id: c._id.toString(),
             name: c.name,

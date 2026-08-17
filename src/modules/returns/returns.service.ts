@@ -19,7 +19,7 @@ export class ReturnsService {
   ) {}
 
   async processReturn(processReturnDto: ProcessReturnDto, user: any) {
-    const sale = await this.saleModel.findById(processReturnDto.saleId);
+    const sale = await this.saleModel.findOne({ _id: processReturnDto.saleId, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!sale) {
       throw new NotFoundException('Original sale invoice record not found');
     }
@@ -52,7 +52,7 @@ export class ReturnsService {
         totalRefund += itemRefund;
 
         // Restock inventory item
-        const item = await this.itemModel.findById(saleItem.itemId);
+        const item = await this.itemModel.findOne({ _id: saleItem.itemId, shopId: user.shopId, isDeleted: { $ne: true } });
         if (item) {
           item.stockQuantity += returnInfo.quantity;
           await item.save();
@@ -111,6 +111,8 @@ export class ReturnsService {
       totalRefund,
       date: new Date(),
       processedBy: user.uid || user.id,
+      shopId: user.shopId,
+      isDeleted: false,
     });
 
     const savedReturn = await returnRecord.save();
@@ -118,7 +120,7 @@ export class ReturnsService {
     // If registered customer, credit customer closing balance and write ledger
     const customerId = processReturnDto.customerId || sale.customerId;
     if (customerId && customerId !== 'walk-in') {
-      const customer = await this.customerModel.findById(customerId);
+      const customer = await this.customerModel.findOne({ _id: customerId, shopId: user.shopId, isDeleted: { $ne: true } });
       if (customer) {
         const prevBalance = customer.closingBalance;
         const newBalance = prevBalance + totalRefund;
@@ -135,6 +137,8 @@ export class ReturnsService {
           amount: totalRefund,
           previousBalance: prevBalance,
           newBalance: newBalance,
+          shopId: user.shopId,
+          isDeleted: false,
         });
 
         await ledger.save();
@@ -156,8 +160,8 @@ export class ReturnsService {
     };
   }
 
-  async findAllReturns() {
-    const returns = await this.returnModel.find().sort({ createdAt: -1 }).exec();
+  async findAllReturns(user: any) {
+    const returns = await this.returnModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).sort({ createdAt: -1 }).exec();
     return returns.map(r => ({
       id: r._id.toString(),
       customerId: r.customerId,

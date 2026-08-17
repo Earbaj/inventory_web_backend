@@ -14,6 +14,8 @@ const dashboard_controller_1 = require("./dashboard.controller");
 const sale_schema_1 = require("../sales/schemas/sale.schema");
 const item_schema_1 = require("../inventory/schemas/item.schema");
 const customer_schema_1 = require("../customers/schemas/customer.schema");
+const user_schema_1 = require("../auth/schemas/user.schema");
+const subscription_payment_schema_1 = require("../subscriptions/schemas/subscription-payment.schema");
 let DashboardModule = class DashboardModule {
 };
 exports.DashboardModule = DashboardModule;
@@ -24,6 +26,8 @@ exports.DashboardModule = DashboardModule = __decorate([
                 { name: sale_schema_1.Sale.name, schema: sale_schema_1.SaleSchema },
                 { name: item_schema_1.Item.name, schema: item_schema_1.ItemSchema },
                 { name: customer_schema_1.Customer.name, schema: customer_schema_1.CustomerSchema },
+                { name: user_schema_1.User.name, schema: user_schema_1.UserSchema },
+                { name: subscription_payment_schema_1.SubscriptionPayment.name, schema: subscription_payment_schema_1.SubscriptionPaymentSchema },
             ]),
         ],
         controllers: [dashboard_controller_1.DashboardController],

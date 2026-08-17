@@ -9,6 +9,10 @@ export declare class Ledger {
     amount: number;
     previousBalance: number;
     newBalance: number;
+    shopId: string;
+    isDeleted: boolean;
+    deletedAt: Date;
+    deletedBy: string;
 }
 export declare const LedgerSchema: MongooseSchema<Ledger, import("mongoose").Model<Ledger, any, any, any, Document<unknown, any, Ledger, any, {}> & Ledger & {
     _id: import("mongoose").Types.ObjectId;

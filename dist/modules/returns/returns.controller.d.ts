@@ -13,7 +13,7 @@ export declare class ReturnsController {
         date: Date;
         processedBy: string;
     }>;
-    findAllReturns(): Promise<{
+    findAllReturns(user: any): Promise<{
         id: string;
         customerId: string;
         saleId: string;

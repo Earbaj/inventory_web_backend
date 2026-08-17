@@ -28,8 +28,8 @@ let ReturnsController = class ReturnsController {
     processReturn(processReturnDto, user) {
         return this.returnsService.processReturn(processReturnDto, user);
     }
-    findAllReturns() {
-        return this.returnsService.findAllReturns();
+    findAllReturns(user) {
+        return this.returnsService.findAllReturns(user);
     }
 };
 exports.ReturnsController = ReturnsController;
@@ -47,8 +47,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'List return transaction history' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ReturnsController.prototype, "findAllReturns", null);
 exports.ReturnsController = ReturnsController = __decorate([

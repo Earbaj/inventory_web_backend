@@ -34,6 +34,10 @@ export declare class Sale {
     createdBy: string;
     createdByName: string;
     isReturned: string;
+    shopId: string;
+    isDeleted: boolean;
+    deletedAt: Date;
+    deletedBy: string;
 }
 export declare const SaleSchema: MongooseSchema<Sale, import("mongoose").Model<Sale, any, any, any, Document<unknown, any, Sale, any, {}> & Sale & {
     _id: import("mongoose").Types.ObjectId;

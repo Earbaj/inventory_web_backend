@@ -99,3 +99,44 @@ export class ChangePasswordDto {
   @MinLength(6)
   newPassword: string;
 }
+
+export class SetupSuperAdminDto {
+  @ApiProperty({ example: 'Platform Super Admin' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ example: 'superadmin@keeper.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: 'supersecret123' })
+  @IsString()
+  @MinLength(6)
+  password: string;
+}
+
+export class ForgotPasswordDto {
+  @ApiProperty({ example: 'user@shop.com' })
+  @IsEmail({}, { message: 'Invalid email address' })
+  @IsNotEmpty()
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @ApiProperty({ example: 'user@shop.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: '123456', description: '6-digit OTP code received via email' })
+  @IsString()
+  @IsNotEmpty()
+  resetCode: string;
+
+  @ApiProperty({ example: 'newsecret123', description: 'New password' })
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+}

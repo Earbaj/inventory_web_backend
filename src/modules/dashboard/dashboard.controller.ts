@@ -17,16 +17,23 @@ export class DashboardController {
     return this.dashboardService.getDashboardStats(user);
   }
 
+  @Get('dashboard/superadmin')
+  @ApiOperation({ summary: 'Get SuperAdmin platform overview metrics (Shops count, Revenue, Pending Payments)' })
+  getSuperAdminDashboard(@GetUser() user: any) {
+    return this.dashboardService.getSuperAdminDashboard(user);
+  }
+
   @Get('reports/sales')
   @ApiOperation({ summary: 'Get aggregated sales report filtered by date range and cashier' })
   @ApiQuery({ name: 'startDate', required: false })
   @ApiQuery({ name: 'endDate', required: false })
   @ApiQuery({ name: 'cashierId', required: false })
   getSalesReport(
+    @GetUser() user: any,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('cashierId') cashierId?: string,
   ) {
-    return this.dashboardService.getSalesReport(startDate, endDate, cashierId);
+    return this.dashboardService.getSalesReport(user, startDate, endDate, cashierId);
   }
 }
