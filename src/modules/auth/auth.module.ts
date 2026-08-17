@@ -7,10 +7,17 @@ import { AuthController } from './auth.controller';
 import { User, UserSchema } from './schemas/user.schema';
 import { JwtStrategy } from './jwt.strategy';
 
+/**
+ * Authentication Module
+ * অথেন্টিকেশন সংক্রান্ত সকল মডেল, প্রোভাইডার, গার্ড ও পলিসি একত্র করার নেস্টজেএস মডিউল।
+ */
 @Module({
   imports: [
+    // MongoDB User কালেকশন স্কিমা রেজিস্টার
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    // Passport এর জন্য ডিফল্ট গার্ড হিসেবে JWT স্ট্র্যাটেজি সেট করা হলো
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    // JWT টোকেন সাইন ও ভ্যালিডেশনের সময় এবং সিক্রেট কি সেটআপ
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET || 'keeper_pos_super_secret_jwt_key_2026',

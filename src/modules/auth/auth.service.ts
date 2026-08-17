@@ -6,6 +6,10 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
 import { LoginDto, RegisterDto, CreateUserDto, PermissionsDto, ChangePasswordDto, SetupSuperAdminDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 
+/**
+ * Authentication & User Management Service
+ * এই সার্ভিসটিতে সাইনআপ, লগইন, সুপার অ্যাডমিন তৈরি, পাসওয়ার্ড রিকভারি, এবং ইউজার পারমিশন কন্ট্রোল লজিক রয়েছে।
+ */
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -16,10 +20,12 @@ export class AuthService {
   ) {}
 
   /**
-   * One-time Initial SuperAdmin Setup
-   * Only allows creation if zero SuperAdmin accounts exist in MongoDB database.
+   * 1. One-time Initial SuperAdmin Setup
+   * ডাটাবেজে যদি ০টি সুপার অ্যাডমিন থাকে তবেই প্রথমবার প্ল্যাটফর্মের সুপার অ্যাডমিন তৈরি করতে দিবে।
+   * ১টি তৈরি হয়ে গেলে পরবর্তী সকল চেষ্টা '403 Forbidden' হিসেবে রিজেক্ট করা হবে।
    */
   async setupSuperAdmin(dto: SetupSuperAdminDto) {
+    // ডাটাবেজে আগে থেকে কোনো সুপার অ্যাডমিন আছে কিনা গণনা করুন
     const existingSuperAdminCount = await this.userModel.countDocuments({ role: 'superadmin' });
     if (existingSuperAdminCount > 0) {
       throw new ForbiddenException('SuperAdmin account already exists. Initial setup can only be executed once.');
@@ -31,6 +37,7 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
+    // পাসওয়ার্ড হ্যাশ (এনক্রিপশন) করুন
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const superAdmin = new this.userModel({
       name: dto.name,
@@ -38,7 +45,7 @@ export class AuthService {
       passwordHash,
       role: 'superadmin',
       subscriptionTier: 'premium',
-      shopId: null,
+      shopId: null, // সুপার অ্যাডমিনের কোনো নির্দিষ্ট শপ নেই, তিনি সম্পূর্ণ প্ল্যাটফর্মের মালিক
       permissions: {
         canProcessReturn: true,
         canExportExcel: true,
@@ -67,7 +74,8 @@ export class AuthService {
   }
 
   /**
-   * Request password recovery OTP code via email
+   * 2. Forgot Password Request (OTP Generation)
+   * ইউজার পাসওয়ার্ড ভুলে গেলে তার ইমেইলে ১৫ মিনিট মেয়াদী ৬ ডিজিটের ওটিপি কোড জেনারেট করে পাঠানো হয়।
    */
   async forgotPassword(dto: ForgotPasswordDto) {
     const email = dto.email.trim().toLowerCase();
@@ -76,27 +84,27 @@ export class AuthService {
       throw new NotFoundException('No account found with this email address');
     }
 
-    // Generate 6-digit numeric OTP code
+    // ৬ ডিজিটের র্যান্ডম ওটিপি জেনারেট করুন (যেমন: 582910)
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // Valid for 15 minutes
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // ১৫ মিনিট মেয়াদ
 
     user.resetPasswordCode = resetCode;
     user.resetPasswordExpiresAt = expiresAt;
     await user.save();
 
-    // Log the OTP code for demonstration/development server logs
+    // ডেভেলপমেন্ট ও ডেমো উদ্দেশ্যে সার্ভার কনসোলে ওটিপি কোডটি প্রিন্ট করে দেখানো হচ্ছে
     this.logger.log(`[PASSWORD RESET OTP] Email: ${email} | Code: ${resetCode} | Expires: ${expiresAt.toISOString()}`);
 
     return {
       message: 'Password reset code has been sent to your email address (valid for 15 minutes)',
       email: user.email,
-      // Returning code in response for testing ease when email gateway is offline
-      devNoticeCode: resetCode,
+      devNoticeCode: resetCode, // টেস্টিং সুবিধার জন্য কোড রিটার্ন করা হলো
     };
   }
 
   /**
-   * Reset password using OTP code
+   * 3. Reset Password Using OTP Code
+   * ইমেইলে প্রাপ্ত ওটিপি কোড এবং নতুন পাসওয়ার্ড দিয়ে অ্যাকাউন্ট রিসেট করার লজিক।
    */
   async resetPassword(dto: ResetPasswordDto) {
     const email = dto.email.trim().toLowerCase();
@@ -105,6 +113,7 @@ export class AuthService {
       throw new BadRequestException('Invalid email or password reset code');
     }
 
+    // ওটিপি কোড এবং মেয়াদ যাচাই করুন
     if (
       !user.resetPasswordCode ||
       user.resetPasswordCode !== dto.resetCode.trim() ||
@@ -114,6 +123,7 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired password reset code');
     }
 
+    // নতুন পাসওয়ার্ড হ্যাশ করে আপডেট করুন এবং ওটিপি ফিল্ড ক্লিয়ার করুন
     user.passwordHash = await bcrypt.hash(dto.newPassword, 10);
     user.resetPasswordCode = null;
     user.resetPasswordExpiresAt = null;
@@ -122,6 +132,10 @@ export class AuthService {
     return { message: 'Password has been reset successfully. You can now login with your new password.' };
   }
 
+  /**
+   * 4. User Login
+   * ইমেইল ও পাসওয়ার্ড যাচাই করে JWT Bearer Token প্রদান করে।
+   */
   async login(loginDto: LoginDto) {
     const email = loginDto.email.trim().toLowerCase();
     const user = await this.userModel.findOne({ email });
@@ -129,6 +143,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // পাসওয়ার্ডের হ্যাশ ম্যাচ করে কিনা চেক করুন
     const isMatch = await bcrypt.compare(loginDto.password, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid email or password');
@@ -152,6 +167,10 @@ export class AuthService {
     };
   }
 
+  /**
+   * 5. Register New Shop Owner (Admin Account)
+   * সাইনআপের পর অ্যাডমিনের নিজস্ব shopId তৈরি হয় যা তার নিজের ইউজার আইডির সমান।
+   */
   async register(registerDto: RegisterDto) {
     const email = registerDto.email.trim().toLowerCase();
     const existing = await this.userModel.findOne({ email });
@@ -170,13 +189,13 @@ export class AuthService {
       email,
       passwordHash,
       role,
-      subscriptionTier: 'free', // Default Free Tier for new shop owners
+      subscriptionTier: 'free', // নতুন শপের জন্য ডিফল্ট Free Tier
       permissions,
       shopId: null,
     });
 
     const savedUser = await newUser.save();
-    // Shop owner's shopId is set to their own User _id
+    // শপ অ্যাডমিনের shopId তার নিজের _id এর সাথে সেট করে দেওয়া হলো
     savedUser.shopId = savedUser._id.toString();
     await savedUser.save();
 
@@ -199,8 +218,8 @@ export class AuthService {
   }
 
   /**
-   * Create a Manager Account (Admin Only)
-   * Enforces Free Tier Limit: Maximum 1 Manager Account for Free Tier Shops
+   * 6. Create Manager Account (Shop Admin Only)
+   * ফ্রি টিয়ার এনফোর্সমেন্ট: ফ্রি টিয়ারে সর্বমোট ১টির বেশি ম্যানেজার অ্যাকাউন্ট তৈরি করা যাবে না।
    */
   async createUser(createUserDto: CreateUserDto, loggedInUser: any) {
     if (loggedInUser.role !== 'admin' && loggedInUser.role !== 'superadmin') {
@@ -213,7 +232,7 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Check Free Tier Manager Limit (Max 1 Manager)
+    // ফ্রি টিয়ার ম্যানেজার লিমিট চেকিং (সর্বোচ্চ ১ জন ম্যানেজার)
     if (createUserDto.role === 'manager') {
       const managerCount = await this.userModel.countDocuments({ role: 'manager', shopId: loggedInUser.shopId });
       const shopOwner = await this.userModel.findById(loggedInUser.shopId || loggedInUser.uid || loggedInUser.id);
@@ -235,7 +254,7 @@ export class AuthService {
       email,
       passwordHash,
       role: createUserDto.role,
-      shopId: loggedInUser.shopId, // Manager linked to creator Admin's shopId
+      shopId: loggedInUser.shopId, // ম্যানেজারকে অ্যাডমিনের শপ আইডির সাথে ট্যাগ করা হলো
       subscriptionTier: loggedInUser.subscriptionTier || 'free',
       permissions,
     });
@@ -252,6 +271,9 @@ export class AuthService {
     };
   }
 
+  /**
+   * 7. Get All Users (Scoped to current shop for Admins, system-wide for SuperAdmin)
+   */
   async getAllUsers(loggedInUser: any) {
     const query: any = {};
     if (loggedInUser.role !== 'superadmin') {
@@ -271,6 +293,9 @@ export class AuthService {
     }));
   }
 
+  /**
+   * 8. Update Manager Permissions (Admin Only)
+   */
   async updateUserPermissions(uid: string, permissions: PermissionsDto, loggedInUser: any) {
     const user = await this.userModel.findById(uid);
     if (!user) {
@@ -297,6 +322,9 @@ export class AuthService {
     };
   }
 
+  /**
+   * 9. Change Logged In User Password
+   */
   async changePassword(uid: string, changePasswordDto: ChangePasswordDto) {
     const user = await this.userModel.findById(uid);
     if (!user) {
@@ -309,6 +337,9 @@ export class AuthService {
     return { message: 'Password updated successfully' };
   }
 
+  /**
+   * 10. Delete User Account (Admin / SuperAdmin Only)
+   */
   async deleteUser(uid: string, loggedInUser: any) {
     const user = await this.userModel.findById(uid);
     if (!user) {

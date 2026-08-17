@@ -17,41 +17,41 @@ class LoginDto {
 }
 exports.LoginDto = LoginDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'admin@shop.com', description: 'User login email' }),
-    (0, class_validator_1.IsEmail)({}, { message: 'Invalid email address' }),
+    (0, swagger_1.ApiProperty)({ example: 'admin@shop.com', description: 'User login email address' }),
+    (0, class_validator_1.IsEmail)({}, { message: 'উচিত বা সঠিক ইমেইল এড্রেস প্রদান করুন' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'admin123', description: 'User account password' }),
+    (0, swagger_1.ApiProperty)({ example: 'admin123', description: 'User account password (min 6 characters)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.MinLength)(6, { message: 'Password must be at least 6 characters' }),
+    (0, class_validator_1.MinLength)(6, { message: 'পাসওয়ার্ড সর্বনিম্ন ৬ অক্ষরের হতে হবে' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
 class PermissionsDto {
 }
 exports.PermissionsDto = PermissionsDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: false }),
+    (0, swagger_1.ApiPropertyOptional)({ example: false, description: 'সেলস ইনভয়েস রিটার্ন করার ক্ষমতা' }),
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], PermissionsDto.prototype, "canProcessReturn", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: true }),
+    (0, swagger_1.ApiPropertyOptional)({ example: true, description: 'এক্সেল রিপোর্ট ডাউনলোড করার ক্ষমতা' }),
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], PermissionsDto.prototype, "canExportExcel", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: false }),
+    (0, swagger_1.ApiPropertyOptional)({ example: false, description: 'কাস্টমার ডাটা এডিট করার ক্ষমতা' }),
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], PermissionsDto.prototype, "canEditCustomers", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: false }),
+    (0, swagger_1.ApiPropertyOptional)({ example: false, description: 'প্রোডাক্ট কেনার দাম (Buy Price) দেখার ক্ষমতা' }),
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
@@ -60,19 +60,19 @@ class RegisterDto {
 }
 exports.RegisterDto = RegisterDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Shop Owner' }),
+    (0, swagger_1.ApiProperty)({ example: 'Shop Owner', description: 'শপ মালিকের নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'admin@shop.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'admin@shop.com', description: 'ইউনিক ইমেইল এড্রেস' }),
     (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'admin123' }),
+    (0, swagger_1.ApiProperty)({ example: 'admin123', description: 'পাসওয়ার্ড (সর্বনিম্ন ৬ টি অক্ষর)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
@@ -87,30 +87,30 @@ class CreateUserDto {
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'John Manager' }),
+    (0, swagger_1.ApiProperty)({ example: 'John Manager', description: 'ম্যানেজারের নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'manager@shop.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'manager@shop.com', description: 'ম্যানেজারের ইমেইল' }),
     (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'admin123' }),
+    (0, swagger_1.ApiProperty)({ example: 'admin123', description: 'ম্যানেজারের পাসওয়ার্ড' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "password", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'manager', enum: ['admin', 'manager'] }),
+    (0, swagger_1.ApiProperty)({ example: 'manager', enum: ['admin', 'manager'], description: 'ইউজার রোল' }),
     (0, class_validator_1.IsEnum)(['admin', 'manager']),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "role", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ type: PermissionsDto }),
+    (0, swagger_1.ApiPropertyOptional)({ type: PermissionsDto, description: 'ম্যানেজারের কাস্টম পারমিশনসমূহ' }),
     (0, class_validator_1.ValidateNested)(),
     (0, class_transformer_1.Type)(() => PermissionsDto),
     (0, class_validator_1.IsOptional)(),
@@ -129,7 +129,7 @@ class ChangePasswordDto {
 }
 exports.ChangePasswordDto = ChangePasswordDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'newsecret123' }),
+    (0, swagger_1.ApiProperty)({ example: 'newsecret123', description: 'নতুন পাসওয়ার্ড' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
@@ -138,19 +138,19 @@ class SetupSuperAdminDto {
 }
 exports.SetupSuperAdminDto = SetupSuperAdminDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Platform Super Admin' }),
+    (0, swagger_1.ApiProperty)({ example: 'Platform Super Admin', description: 'সুপার অ্যাডমিনের নাম' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], SetupSuperAdminDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'superadmin@keeper.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'superadmin@keeper.com', description: 'সুপার অ্যাডমিনের ইমেইল' }),
     (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], SetupSuperAdminDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'supersecret123' }),
+    (0, swagger_1.ApiProperty)({ example: 'supersecret123', description: 'পাসওয়ার্ড' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
@@ -159,8 +159,8 @@ class ForgotPasswordDto {
 }
 exports.ForgotPasswordDto = ForgotPasswordDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'user@shop.com' }),
-    (0, class_validator_1.IsEmail)({}, { message: 'Invalid email address' }),
+    (0, swagger_1.ApiProperty)({ example: 'user@shop.com', description: 'রেজিস্টার্ড ইমেইল এড্রেস' }),
+    (0, class_validator_1.IsEmail)({}, { message: 'সঠিক ইমেইল এড্রেস প্রদান করুন' }),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ForgotPasswordDto.prototype, "email", void 0);
@@ -168,19 +168,19 @@ class ResetPasswordDto {
 }
 exports.ResetPasswordDto = ResetPasswordDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'user@shop.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'user@shop.com', description: 'রেজিস্টার্ড ইমেইল' }),
     (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '123456', description: '6-digit OTP code received via email' }),
+    (0, swagger_1.ApiProperty)({ example: '123456', description: 'ইমেইলে প্রাপ্ত ৬-ডিজিটের ওটিপি কোড' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "resetCode", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'newsecret123', description: 'New password' }),
+    (0, swagger_1.ApiProperty)({ example: 'newsecret123', description: 'নতুন পাসওয়ার্ড' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
