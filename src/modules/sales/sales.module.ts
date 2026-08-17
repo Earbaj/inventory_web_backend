@@ -7,8 +7,13 @@ import { Item, ItemSchema } from '../inventory/schemas/item.schema';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Ledger, LedgerSchema } from '../customers/schemas/ledger.schema';
 
+/**
+ * Sales Module
+ * POS চেকআউট ও বিক্রয় সংক্রান্ত মডেল (Sale, Item, Customer, Ledger) এবং কন্ট্রোলার রেজিস্টার মডিউল।
+ */
 @Module({
   imports: [
+    // Sale, Item, Customer এবং Ledger কালেকশন স্কিমা MongoDB তে রেজিস্টার করা
     MongooseModule.forFeature([
       { name: Sale.name, schema: SaleSchema },
       { name: Item.name, schema: ItemSchema },

@@ -7,6 +7,10 @@ import { Customer, CustomerDocument } from '../customers/schemas/customer.schema
 import { Ledger, LedgerDocument } from '../customers/schemas/ledger.schema';
 import { CreateSaleDto } from './dto/sales.dto';
 
+/**
+ * POS Checkout & Sales Billing Service
+ * ইনভয়েস বিলিং, স্টক কমানো, অটোমেটিক মেমো জেনারেট এবং কাস্টমার খাতা/লেজার আপডেট করার সার্ভিস।
+ */
 @Injectable()
 export class SalesService {
   constructor(
@@ -16,12 +20,21 @@ export class SalesService {
     @InjectModel(Ledger.name) private ledgerModel: Model<LedgerDocument>,
   ) {}
 
+  /**
+   * 1. Process POS Checkout Sale Transaction
+   * বিলিং প্রসেস করা:
+   * - ইনভেন্টরি থেকে স্টক সংখ্যা যাচাই করা ও স্টক কমানো।
+   * - প্রতিটি পণ্যের ইউনিট প্রাইজ ও ছাড়ের সাবটোটাল হিসাব করা।
+   * - ইউনিক ইনভয়েস নম্বর জেনারেট করা (যেমন: INV-20260817-0001)।
+   * - রেজিস্টার্ড কাস্টমার হলে তার ব্যালেন্স ও লেজার স্টেটমেন্ট খাতায় 'sale' হিসাব এন্ট্রি দেওয়া।
+   * - ফ্রি টিয়ার এনফোর্সমেন্ট: ফ্রি প্যাকেজে সর্বোচ্চ ৫টি পর্যন্ত সেলস করা সম্ভব।
+   */
   async createSale(createSaleDto: CreateSaleDto, user: any) {
     if (!createSaleDto.items || createSaleDto.items.length === 0) {
       throw new BadRequestException('Sale must contain at least one item');
     }
 
-    // Check Free Tier Sales Limit (Max 5 Sales for Free Tier)
+    // ফ্রি টিয়ার সেলস ট্রানজেকশন লিমিট চেক (সর্বোচ্চ ৫টি বিক্রি)
     if (user.subscriptionTier === 'free') {
       const saleCount = await this.saleModel.countDocuments({
         shopId: user.shopId,
@@ -37,7 +50,7 @@ export class SalesService {
     let subtotal = 0;
     const saleItems = [];
 
-    // Process each item, check stock, update stock
+    // প্রতিটি পণ্য যাচাই ও স্টক কমানো
     for (const reqItem of createSaleDto.items) {
       const item = await this.itemModel.findOne({
         _id: reqItem.itemId,
@@ -48,6 +61,7 @@ export class SalesService {
         throw new NotFoundException(`Item with ID '${reqItem.itemId}' not found in your inventory`);
       }
 
+      // পণ্যের স্টক আছে কিনা পরীক্ষা
       if (item.stockQuantity < reqItem.quantity) {
         throw new BadRequestException(`Insufficient stock for '${item.name}'. Available: ${item.stockQuantity}, Requested: ${reqItem.quantity}`);
       }
@@ -67,7 +81,7 @@ export class SalesService {
 
       subtotal += itemTotal;
 
-      // Deduct stock quantity
+      // ইনভেন্টরি থেকে পণ্যের স্টক সংখ্যা কমিয়ে দেওয়া
       item.stockQuantity -= reqItem.quantity;
       await item.save();
 
@@ -94,7 +108,7 @@ export class SalesService {
       paymentStatus = 'partial';
     }
 
-    // Generate Invoice Number for this shop
+    // ইউনিক শপ-ভিত্তিক ইনভয়েস সিরিয়াল নম্বর জেনারেট করা
     const count = await this.saleModel.countDocuments({ shopId: user.shopId });
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const invoiceNumber = `INV-${dateStr}-${(count + 1).toString().padStart(4, '0')}`;
@@ -138,7 +152,7 @@ export class SalesService {
 
     const savedSale = await sale.save();
 
-    // If registered customer, update closing balance and add ledger entry
+    // কাস্টমার রেজিস্টার্ড হলে লেজার খাতা ও ক্লোজিং ব্যালেন্স ডেবিট/ক্যালকুলেট করা
     if (customer && customerId !== 'walk-in') {
       const prevBalance = customer.closingBalance;
       const balanceChange = paidAmount - grandTotal;
@@ -166,6 +180,9 @@ export class SalesService {
     return this.formatSale(savedSale);
   }
 
+  /**
+   * 2. List All Active Sales Invoices
+   */
   async findAllSales(user: any, cashierId?: string, paymentStatus?: string) {
     const query: any = { shopId: user.shopId, isDeleted: { $ne: true } };
     if (cashierId) query.createdBy = cashierId;
@@ -175,18 +192,27 @@ export class SalesService {
     return sales.map(s => this.formatSale(s));
   }
 
+  /**
+   * 3. Get Sale Details By ID
+   */
   async findOneSale(id: string, user: any) {
     const sale = await this.saleModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!sale) throw new NotFoundException('Sale record not found');
     return this.formatSale(sale);
   }
 
+  /**
+   * 4. Get Invoice Details By Invoice Number (e.g. INV-20260817-0001)
+   */
   async findByInvoice(invoiceNumber: string, user: any) {
     const sale = await this.saleModel.findOne({ invoiceNumber, shopId: user.shopId, isDeleted: { $ne: true } });
     if (!sale) throw new NotFoundException('Invoice not found');
     return this.formatSale(sale);
   }
 
+  /**
+   * Response Formatter Helper
+   */
   public formatSale(sale: SaleDocument) {
     return {
       id: sale._id.toString(),
