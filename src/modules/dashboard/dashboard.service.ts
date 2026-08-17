@@ -7,6 +7,10 @@ import { Customer, CustomerDocument } from '../customers/schemas/customer.schema
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { SubscriptionPayment, SubscriptionPaymentSchema } from '../subscriptions/schemas/subscription-payment.schema';
 
+/**
+ * Dashboard & Business Analytics Service
+ * শপ ওভারভিউ KPIs, বিক্রয় রিপোর্ট এবং সুপার অ্যাডমিন প্ল্যাটফর্ম মেট্রিক্স হিসাব করার সার্ভিস।
+ */
 @Injectable()
 export class DashboardService {
   constructor(
@@ -17,8 +21,14 @@ export class DashboardService {
     @InjectModel(SubscriptionPayment.name) private subscriptionPaymentModel: Model<SubscriptionPayment>,
   ) {}
 
+  /**
+   * 1. Get Shop Dashboard Overview KPIs
+   * শপের মোট বিক্রি, ক্যাশ কালেকশন, মোট বাকি, নিট লাভ, স্টক অ্যালার্ট ও কাস্টমার বাকির সামারি।
+   */
   async getDashboardStats(user: any) {
     const shopId = user.shopId;
+
+    // শুধুমাত্র নিজস্ব শপের এক্টিভ (isDeleted: false) ডাটা আনা হচ্ছে
     const sales = await this.saleModel.find({ shopId, isDeleted: { $ne: true } }).exec();
     const items = await this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec();
     const customers = await this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec();
@@ -27,13 +37,14 @@ export class DashboardService {
     let totalPaidCollected = 0;
     let totalDue = 0;
 
+    // মোট বিক্রি, ক্যাশ জমা ও বকেয়া হিসাব
     for (const s of sales) {
       totalSalesRevenue += s.grandTotal;
       totalPaidCollected += s.paidAmount;
       totalDue += s.dueAmount;
     }
 
-    // Profit Calculation (Admin or user with canViewBuyPrice permission)
+    // নিট লাভ (Profit) হিসাব - শুধুমাত্র অ্যাডমিন বা কেনাদাম দেখার অনুমতি প্রাপ্ত ইউজাররা দেখতে পাবেন
     let netProfit = 0;
     const canViewBuy = user.role === 'admin' || user.role === 'superadmin' || user.permissions?.canViewBuyPrice;
     
@@ -51,9 +62,10 @@ export class DashboardService {
       }
     }
 
+    // কম স্টক সম্পন্ন প্রোডাক্টের সংখ্যা হিসাব (Low Stock Alerts)
     const lowStockItems = items.filter(i => i.stockQuantity <= i.lowStockThreshold);
 
-    // Outstanding due across customers (negative closing balance means due)
+    // সকল কাস্টমারের মোট বাকি পরিমাণ হিসাব (ক্লোজিং ব্যালেন্স নেগেটিভ হওয়া মানে বাকি)
     let totalCustomerDue = 0;
     customers.forEach(c => {
       if (c.closingBalance < 0) {
@@ -74,6 +86,10 @@ export class DashboardService {
     };
   }
 
+  /**
+   * 2. Get Filtered Sales Report
+   * তারিখ অনুযায়ী (Date Range Filter) এবং ক্যাশিয়ার আইডি দিয়ে ফিল্টারকৃত বিস্তারিত বিক্রয় রিপোর্ট।
+   */
   async getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string) {
     const query: any = { shopId: user.shopId, isDeleted: { $ne: true } };
     if (cashierId) query.createdBy = cashierId;
@@ -110,6 +126,7 @@ export class DashboardService {
       totalDiscount: totalDiscount.toString(),
       totalInvoices: sales.length,
       totalItemsSold,
+      // সর্বোচ্চ বিক্রীত সেরা ১০টি প্রোডাক্ট (Top 10 Selling Products)
       topSellingItems: Array.from(itemsSummary.values())
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10)
@@ -128,7 +145,8 @@ export class DashboardService {
   }
 
   /**
-   * Platform Overview Metrics for SuperAdmin
+   * 3. Platform Overview Metrics for SuperAdmin
+   * পুরো প্ল্যাটফর্মের মোট শপ সংখ্যা, ম্যানেজার সংখ্যা, সাবস্ক্রিপশন আয় ও পেন্ডিং পেমেন্ট রিকোয়েস্ট দেখার এপিআই।
    */
   async getSuperAdminDashboard(user: any) {
     if (user.role !== 'superadmin') {
