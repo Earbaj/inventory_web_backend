@@ -117,7 +117,7 @@ npm run start:prod
 
 ---
 
-## 📖 Complete API Reference Guide
+## 📖 Complete API Reference Guide & JSON Request Payloads
 
 ### 0. 🏥 System Health Check
 
@@ -143,6 +143,86 @@ npm run start:prod
 | `POST` | `/api/users/change-password` | Change logged-in user password | Authenticated |
 | `DELETE` | `/api/users/:id` | Delete user account | Admin / SuperAdmin |
 
+#### 📥 Request JSON Payloads (Auth & Users)
+
+- **`POST /api/auth/setup-superadmin`**
+  ```json
+  {
+    "name": "Platform Super Admin",
+    "email": "superadmin@keeper.com",
+    "password": "supersecretpassword123"
+  }
+  ```
+
+- **`POST /api/auth/login`**
+  ```json
+  {
+    "email": "admin@shop.com",
+    "password": "adminpassword123"
+  }
+  ```
+
+- **`POST /api/auth/register`**
+  ```json
+  {
+    "name": "Rahim Store Admin",
+    "email": "admin@shop.com",
+    "password": "adminpassword123"
+  }
+  ```
+
+- **`POST /api/auth/forgot-password`**
+  ```json
+  {
+    "email": "admin@shop.com"
+  }
+  ```
+
+- **`POST /api/auth/reset-password`**
+  ```json
+  {
+    "email": "admin@shop.com",
+    "resetCode": "582910",
+    "newPassword": "newsecurepassword123"
+  }
+  ```
+
+- **`POST /api/users`**
+  ```json
+  {
+    "name": "Kamal Staff Manager",
+    "email": "manager@shop.com",
+    "password": "managerpassword123",
+    "role": "manager",
+    "permissions": {
+      "canProcessReturn": true,
+      "canExportExcel": false,
+      "canEditCustomers": true,
+      "canViewBuyPrice": false
+    }
+  }
+  ```
+
+- **`PATCH /api/users/:id/permissions`**
+  ```json
+  {
+    "permissions": {
+      "canProcessReturn": true,
+      "canExportExcel": true,
+      "canEditCustomers": false,
+      "canViewBuyPrice": true
+    }
+  }
+  ```
+
+- **`POST /api/users/change-password`**
+  ```json
+  {
+    "oldPassword": "currentpassword123",
+    "newPassword": "newpassword123"
+  }
+  ```
+
 ---
 
 ### 2. 👥 Staff Management
@@ -154,6 +234,36 @@ npm run start:prod
 | `GET` | `/api/staff/:id` | Get single staff member details by ID | Authenticated |
 | `PATCH` | `/api/staff/:id/permissions` | Update staff member permissions | Admin / SuperAdmin |
 | `DELETE` | `/api/staff/:id` | Delete staff member account | Admin / SuperAdmin |
+
+#### 📥 Request JSON Payloads (Staff)
+
+- **`POST /api/staff`**
+  ```json
+  {
+    "name": "Jamal Cashier",
+    "email": "staff@shop.com",
+    "password": "staffpassword123",
+    "role": "manager",
+    "permissions": {
+      "canProcessReturn": false,
+      "canExportExcel": false,
+      "canEditCustomers": true,
+      "canViewBuyPrice": false
+    }
+  }
+  ```
+
+- **`PATCH /api/staff/:id/permissions`**
+  ```json
+  {
+    "permissions": {
+      "canProcessReturn": true,
+      "canExportExcel": true,
+      "canEditCustomers": true,
+      "canViewBuyPrice": false
+    }
+  }
+  ```
 
 ---
 
@@ -178,6 +288,26 @@ npm run start:prod
 | `PATCH` | `/api/subscriptions/payments/:id/approve` | Approve payment request & extend tier expiry | SuperAdmin Only |
 | `PATCH` | `/api/subscriptions/payments/:id/reject` | Reject payment request with reason | SuperAdmin Only |
 
+#### 📥 Request JSON Payloads (Subscriptions)
+
+- **`POST /api/subscriptions/payments/manual`**
+  ```json
+  {
+    "packageId": "premium_monthly",
+    "amount": 1000,
+    "paymentMethod": "manual_bkash",
+    "trxId": "BK88231920X",
+    "accountNo": "01711223344"
+  }
+  ```
+
+- **`PATCH /api/subscriptions/payments/:id/reject`**
+  ```json
+  {
+    "reason": "Transaction ID does not match merchant account records"
+  }
+  ```
+
 ---
 
 ### 5. 📦 Inventory Catalog (Free Tier Limit: Max 5 Items)
@@ -194,6 +324,51 @@ npm run start:prod
 | `GET` | `/api/categories` | List product categories (Paginated) | Authenticated |
 | `POST` | `/api/categories` | Create new product category | Authenticated |
 
+#### 📥 Request JSON Payloads (Inventory)
+
+- **`POST /api/items`**
+  ```json
+  {
+    "name": "Wireless Mouse",
+    "sku": "SKU-1001",
+    "category": "Electronics",
+    "sellPrice": 450.00,
+    "buyPrice": 320.00,
+    "stockQuantity": 50,
+    "unit": "pcs",
+    "lowStockThreshold": 5
+  }
+  ```
+
+- **`PUT /api/items/:id`**
+  ```json
+  {
+    "name": "Wireless Mouse Ergonomic",
+    "sku": "SKU-1001-V2",
+    "category": "Electronics",
+    "sellPrice": 480.00,
+    "buyPrice": 340.00,
+    "stockQuantity": 60,
+    "unit": "pcs",
+    "lowStockThreshold": 10
+  }
+  ```
+
+- **`PATCH /api/items/:id/stock`**
+  ```json
+  {
+    "adjustment": 10
+  }
+  ```
+
+- **`POST /api/categories`**
+  ```json
+  {
+    "name": "Electronics",
+    "description": "Computer peripherals and hardware accessories"
+  }
+  ```
+
 ---
 
 ### 6. 👥 Customers & Ledger Statements (Free Tier Limit: Max 1 Customer)
@@ -207,6 +382,27 @@ npm run start:prod
 | `DELETE` | `/api/customers/:id` | Delete customer (Moves to Recycle Bin) | Permission: `canEditCustomers` |
 | `GET` | `/api/customers/:id/ledger` | Get transaction statement ledger (Paginated) | Authenticated |
 
+#### 📥 Request JSON Payloads (Customers)
+
+- **`POST /api/customers`**
+  ```json
+  {
+    "name": "Rahim Traders",
+    "phone": "01711000000",
+    "address": "Motijheel, Dhaka",
+    "openingBalance": 100.00
+  }
+  ```
+
+- **`PUT /api/customers/:id`**
+  ```json
+  {
+    "name": "Rahim Store Ltd",
+    "phone": "01711000000",
+    "address": "Dhanmondi, Dhaka"
+  }
+  ```
+
 ---
 
 ### 7. 🛒 Sales & POS Checkout Billing (Free Tier Limit: Max 5 Sales)
@@ -218,6 +414,28 @@ npm run start:prod
 | `GET` | `/api/sales/invoice/:invoiceNumber` | Fetch invoice details by number | Authenticated |
 | `GET` | `/api/sales/:id` | Get sale details by ID | Authenticated |
 
+#### 📥 Request JSON Payloads (Sales & POS Billing)
+
+- **`POST /api/sales`**
+  ```json
+  {
+    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
+    "customerName": "Rahim Traders",
+    "customerPhone": "01711000000",
+    "items": [
+      {
+        "itemId": "65c1a2b3c4d5e6f7a8b9c0e2",
+        "quantity": 2,
+        "unitPrice": 450.00,
+        "discount": 10.00,
+        "discountType": "percent"
+      }
+    ],
+    "discount": 20.00,
+    "paidAmount": 700.00
+  }
+  ```
+
 ---
 
 ### 8. 💵 Customer Due Payments & Collections
@@ -225,6 +443,17 @@ npm run start:prod
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/payments` | Process payment against customer due balance | Authenticated |
+
+#### 📥 Request JSON Payloads (Due Payments)
+
+- **`POST /api/payments`**
+  ```json
+  {
+    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
+    "amount": 500.00,
+    "paymentMethod": "cash"
+  }
+  ```
 
 ---
 
@@ -234,6 +463,22 @@ npm run start:prod
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/returns` | Process product return & restock inventory | Permission: `canProcessReturn` |
 | `GET` | `/api/returns` | List return transaction history (Paginated) | Authenticated |
+
+#### 📥 Request JSON Payloads (Returns & Restocking)
+
+- **`POST /api/returns`**
+  ```json
+  {
+    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
+    "saleId": "65c1a2b3c4d5e6f7a8b9c0d2",
+    "returnedItems": [
+      {
+        "itemId": "65c1a2b3c4d5e6f7a8b9c0e2",
+        "quantity": 1
+      }
+    ]
+  }
+  ```
 
 ---
 
