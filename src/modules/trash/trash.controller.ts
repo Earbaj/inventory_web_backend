@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Delete, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { TrashService } from './trash.service';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -17,12 +18,13 @@ export class TrashController {
 
   /**
    * 1. Get Trash Items List Endpoint
-   * শপের সকল সফট-ডিলিট হওয়া ডাটার (আইটেম, কাস্টমার, সেলস, রিটার্ন) তালিকা দেখা।
+   * শপের সকল সফট-ডিলিট হওয়া ডাটার (আইটেম, কাস্টমার, সেলস, রিটার্ন) পেজিনেটেড তালিকা দেখা।
    */
   @Get()
-  @ApiOperation({ summary: 'List all soft-deleted items, customers, sales, and returns in Recycle Bin' })
-  getTrashItems(@GetUser() user: any) {
-    return this.trashService.getTrashItems(user);
+  @ApiOperation({ summary: 'List all soft-deleted items, customers, sales, and returns in Recycle Bin (Paginated)' })
+  @ApiQuery({ name: 'entityType', required: false, enum: ['all', 'item', 'customer', 'sale', 'return'] })
+  getTrashItems(@GetUser() user: any, @Query() query: PaginationQueryDto & { entityType?: string }) {
+    return this.trashService.getTrashItems(user, query);
   }
 
   /**

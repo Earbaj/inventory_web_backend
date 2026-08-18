@@ -24,21 +24,120 @@ export class TrashService {
   ) {}
 
   /**
-   * 1. Get All Soft-Deleted Records for Current Shop (Recycle Bin List)
+   * 1. Get All Soft-Deleted Records for Current Shop (Recycle Bin List) (Paginated)
    * নিজের শপের সফট-ডিলিট হওয়া সকল ডাটা (Items, Customers, Sales, Returns) দেখা।
    */
-  async getTrashItems(user: any) {
+  async getTrashItems(user: any, query: any = {}) {
     const shopId = user.shopId;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
 
+    const entityType = (query.entityType || 'all').toLowerCase();
+    const search = query.search;
+
+    const itemsFilter: any = { shopId, isDeleted: true };
+    const customersFilter: any = { shopId, isDeleted: true };
+    const salesFilter: any = { shopId, isDeleted: true };
+    const returnsFilter: any = { shopId, isDeleted: true };
+
+    if (search) {
+      itemsFilter.$or = [{ name: { $regex: search, $options: 'i' } }, { sku: { $regex: search, $options: 'i' } }];
+      customersFilter.$or = [{ name: { $regex: search, $options: 'i' } }, { phone: { $regex: search, $options: 'i' } }];
+      salesFilter.$or = [{ invoiceNumber: { $regex: search, $options: 'i' } }, { customerName: { $regex: search, $options: 'i' } }];
+      returnsFilter.$or = [{ invoiceNumber: { $regex: search, $options: 'i' } }];
+    }
+
+    if (entityType === 'item' || entityType === 'inventory') {
+      const [total, items] = await Promise.all([
+        this.itemModel.countDocuments(itemsFilter),
+        this.itemModel.find(itemsFilter).sort({ deletedAt: -1 }).skip(skip).limit(limit).exec(),
+      ]);
+      const totalPages = Math.ceil(total / limit) || 1;
+      return {
+        data: items.map(i => ({
+          id: i._id.toString(),
+          entityType: 'item',
+          name: i.name,
+          sku: i.sku,
+          sellPrice: i.sellPrice,
+          stockQuantity: i.stockQuantity,
+          deletedAt: i.deletedAt,
+          deletedBy: i.deletedBy,
+        })),
+        meta: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+      };
+    }
+
+    if (entityType === 'customer') {
+      const [total, customers] = await Promise.all([
+        this.customerModel.countDocuments(customersFilter),
+        this.customerModel.find(customersFilter).sort({ deletedAt: -1 }).skip(skip).limit(limit).exec(),
+      ]);
+      const totalPages = Math.ceil(total / limit) || 1;
+      return {
+        data: customers.map(c => ({
+          id: c._id.toString(),
+          entityType: 'customer',
+          name: c.name,
+          phone: c.phone,
+          closingBalance: c.closingBalance,
+          deletedAt: c.deletedAt,
+          deletedBy: c.deletedBy,
+        })),
+        meta: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+      };
+    }
+
+    if (entityType === 'sale') {
+      const [total, sales] = await Promise.all([
+        this.saleModel.countDocuments(salesFilter),
+        this.saleModel.find(salesFilter).sort({ deletedAt: -1 }).skip(skip).limit(limit).exec(),
+      ]);
+      const totalPages = Math.ceil(total / limit) || 1;
+      return {
+        data: sales.map(s => ({
+          id: s._id.toString(),
+          entityType: 'sale',
+          invoiceNumber: s.invoiceNumber,
+          customerName: s.customerName,
+          grandTotal: s.grandTotal,
+          deletedAt: s.deletedAt,
+          deletedBy: s.deletedBy,
+        })),
+        meta: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+      };
+    }
+
+    if (entityType === 'return') {
+      const [total, returns] = await Promise.all([
+        this.returnModel.countDocuments(returnsFilter),
+        this.returnModel.find(returnsFilter).sort({ deletedAt: -1 }).skip(skip).limit(limit).exec(),
+      ]);
+      const totalPages = Math.ceil(total / limit) || 1;
+      return {
+        data: returns.map(r => ({
+          id: r._id.toString(),
+          entityType: 'return',
+          invoiceNumber: r.invoiceNumber,
+          totalRefund: r.totalRefund,
+          deletedAt: r.deletedAt,
+          deletedBy: r.deletedBy,
+        })),
+        meta: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+      };
+    }
+
+    // Default 'all': Fetch combined soft-deleted items across all entities
     const [deletedItems, deletedCustomers, deletedSales, deletedReturns] = await Promise.all([
-      this.itemModel.find({ shopId, isDeleted: true }).sort({ deletedAt: -1 }).exec(),
-      this.customerModel.find({ shopId, isDeleted: true }).sort({ deletedAt: -1 }).exec(),
-      this.saleModel.find({ shopId, isDeleted: true }).sort({ deletedAt: -1 }).exec(),
-      this.returnModel.find({ shopId, isDeleted: true }).sort({ deletedAt: -1 }).exec(),
+      this.itemModel.find(itemsFilter).sort({ deletedAt: -1 }).exec(),
+      this.customerModel.find(customersFilter).sort({ deletedAt: -1 }).exec(),
+      this.saleModel.find(salesFilter).sort({ deletedAt: -1 }).exec(),
+      this.returnModel.find(returnsFilter).sort({ deletedAt: -1 }).exec(),
     ]);
 
-    return {
-      items: deletedItems.map(i => ({
+    const allRecords = [
+      ...deletedItems.map(i => ({
         id: i._id.toString(),
         entityType: 'item',
         name: i.name,
@@ -48,7 +147,7 @@ export class TrashService {
         deletedAt: i.deletedAt,
         deletedBy: i.deletedBy,
       })),
-      customers: deletedCustomers.map(c => ({
+      ...deletedCustomers.map(c => ({
         id: c._id.toString(),
         entityType: 'customer',
         name: c.name,
@@ -57,7 +156,7 @@ export class TrashService {
         deletedAt: c.deletedAt,
         deletedBy: c.deletedBy,
       })),
-      sales: deletedSales.map(s => ({
+      ...deletedSales.map(s => ({
         id: s._id.toString(),
         entityType: 'sale',
         invoiceNumber: s.invoiceNumber,
@@ -66,7 +165,7 @@ export class TrashService {
         deletedAt: s.deletedAt,
         deletedBy: s.deletedBy,
       })),
-      returns: deletedReturns.map(r => ({
+      ...deletedReturns.map(r => ({
         id: r._id.toString(),
         entityType: 'return',
         invoiceNumber: r.invoiceNumber,
@@ -74,6 +173,15 @@ export class TrashService {
         deletedAt: r.deletedAt,
         deletedBy: r.deletedBy,
       })),
+    ].sort((a, b) => new Date(b.deletedAt || 0).getTime() - new Date(a.deletedAt || 0).getTime());
+
+    const total = allRecords.length;
+    const paginated = allRecords.slice(skip, skip + limit);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: paginated,
+      meta: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
     };
   }
 
