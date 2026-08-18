@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubmitManualPaymentDto, RejectPaymentDto } from './dto/subscription.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -58,9 +59,9 @@ export class SubscriptionsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get('payments/my')
-  @ApiOperation({ summary: 'Get payment request history for current shop' })
-  getMyPaymentRequests(@GetUser() user: any) {
-    return this.subscriptionsService.getMyPaymentRequests(user);
+  @ApiOperation({ summary: 'Get payment request history for current shop (Paginated)' })
+  getMyPaymentRequests(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.subscriptionsService.getMyPaymentRequests(user, query);
   }
 
   /**
@@ -71,9 +72,9 @@ export class SubscriptionsController {
   @Roles('superadmin')
   @ApiBearerAuth()
   @Get('payments/pending')
-  @ApiOperation({ summary: 'List all pending subscription payment requests (SuperAdmin only)' })
-  getPendingPayments(@GetUser() user: any) {
-    return this.subscriptionsService.getPendingPayments(user);
+  @ApiOperation({ summary: 'List all pending subscription payment requests (SuperAdmin only) (Paginated)' })
+  getPendingPayments(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.subscriptionsService.getPendingPayments(user, query);
   }
 
   /**

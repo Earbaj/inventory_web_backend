@@ -122,27 +122,77 @@ export class SubscriptionsService {
   }
 
   /**
-   * 4. Get Payment Request History for Current Shop Owner
+   * 4. Get Payment Request History for Current Shop Owner (Paginated)
    */
-  async getMyPaymentRequests(user: any) {
-    return this.subscriptionPaymentModel
-      .find({ shopId: user.shopId })
-      .sort({ createdAt: -1 })
+  async getMyPaymentRequests(user: any, query: any = {}) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = { shopId: user.shopId };
+    if (query.search) {
+      filter.$or = [
+        { trxId: { $regex: query.search, $options: 'i' } },
+        { accountNo: { $regex: query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const total = await this.subscriptionPaymentModel.countDocuments(filter);
+    const payments = await this.subscriptionPaymentModel
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
       .exec();
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: payments,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   /**
-   * 5. Get All Pending Payment Requests (SuperAdmin Only)
-   * সুপার অ্যাডমিনের পর্যালোচনার জন্য পেন্ডিং পেমেন্ট রিকোয়েস্টের তালিকা।
+   * 5. Get All Pending Payment Requests (SuperAdmin Only) (Paginated)
+   * সুপার অ্যাডমিনের পর্যালোচনার জন্য পেন্ডিং পেমেন্ট রিকোয়েস্টের পেজিনেটেড তালিকা।
    */
-  async getPendingPayments(user: any) {
+  async getPendingPayments(user: any, query: any = {}) {
     if (user.role !== 'superadmin') {
       throw new ForbiddenException('Only SuperAdmin can view pending subscription payments');
     }
 
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = { status: 'pending' };
+    if (query.search) {
+      filter.$or = [
+        { trxId: { $regex: query.search, $options: 'i' } },
+        { accountNo: { $regex: query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortOrder === 'desc' ? -1 : 1;
+
+    const total = await this.subscriptionPaymentModel.countDocuments(filter);
     const pendingPayments = await this.subscriptionPaymentModel
-      .find({ status: 'pending' })
-      .sort({ createdAt: 1 })
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
       .exec();
 
     // শপ মালিকের ইমেইল ও নাম যুক্ত করা
@@ -155,7 +205,19 @@ export class SubscriptionsService {
       });
     }
 
-    return result;
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: result,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   /**
