@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
-import { CreateSaleDto } from './dto/sales.dto';
+import { CreateSaleDto, QuerySalesDto } from './dto/sales.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -28,18 +28,15 @@ export class SalesController {
 
   /**
    * 2. List All Sales Invoices Endpoint
-   * শপের সকল বিক্রয় ইনভয়েসের তালিকা দেখা (ক্যাশিয়ার ও পেমেন্ট স্ট্যাটাস ফিল্টারসহ)।
+   * শপের সকল বিক্রয় ইনভয়েসের পেজিনেটেড তালিকা দেখা (ক্যাশিয়ার, পেমেন্ট স্ট্যাটাস, ডেট ও সার্চ ফিল্টারসহ)।
    */
   @Get()
-  @ApiOperation({ summary: 'List all sales invoices' })
-  @ApiQuery({ name: 'cashierId', required: false })
-  @ApiQuery({ name: 'paymentStatus', required: false })
+  @ApiOperation({ summary: 'List all sales invoices (Paginated)' })
   findAllSales(
     @GetUser() user: any,
-    @Query('cashierId') cashierId?: string,
-    @Query('paymentStatus') paymentStatus?: string,
+    @Query() query: QuerySalesDto,
   ) {
-    return this.salesService.findAllSales(user, cashierId, paymentStatus);
+    return this.salesService.findAllSales(user, query);
   }
 
   /**

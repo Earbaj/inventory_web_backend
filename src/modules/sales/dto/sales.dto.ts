@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsNumber, Min, IsArray, ValidateNested, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 /**
  * Sale Item Input DTO
@@ -71,3 +72,30 @@ export class CreateSaleDto {
   @Min(0)
   paidAmount: number;
 }
+
+/**
+ * Query Sales Invoices DTO
+ * বিক্রয় ইনভয়েস ফিল্টারিং ও পেজিনেশনের ডিটিও।
+ */
+export class QuerySalesDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ example: '65c1a2b3c4d5e6f7a8b9c0d1', description: 'ক্যাশিয়ার ইউজারের আইডি ফিল্টার' })
+  @IsString()
+  @IsOptional()
+  cashierId?: string;
+
+  @ApiPropertyOptional({ example: 'paid', enum: ['paid', 'due', 'partial'], description: 'পেমেন্ট স্ট্যাটাস ফিল্টার' })
+  @IsString()
+  @IsOptional()
+  paymentStatus?: string;
+
+  @ApiPropertyOptional({ example: '2026-01-01', description: 'শুরুর তারিখ (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31', description: 'শেষের তারিখ (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  endDate?: string;
+}
+
