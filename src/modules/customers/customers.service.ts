@@ -68,14 +68,47 @@ export class CustomersService {
   }
 
   /**
-   * 2. List All Active Customers for Current Shop
-   * লগইন থাকা ইউজারের শপের এক্টিভ (isDeleted: false) কাস্টমারদের তালিকা।
+   * 2. List All Active Customers for Current Shop (Paginated)
+   * লগইন থাকা ইউজারের শপের এক্টিভ (isDeleted: false) কাস্টমারদের পেজিনেটেড তালিকা।
    */
-  async findAll(user: any) {
+  async findAll(user: any, query: any = {}) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = { shopId: user.shopId, isDeleted: { $ne: true } };
+    if (query.search) {
+      filter.$or = [
+        { name: { $regex: query.search, $options: 'i' } },
+        { phone: { $regex: query.search, $options: 'i' } },
+        { address: { $regex: query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const total = await this.customerModel.countDocuments(filter);
     const customers = await this.customerModel
-      .find({ shopId: user.shopId, isDeleted: { $ne: true } })
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
       .exec();
-    return customers.map(c => this.formatCustomer(c));
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: customers.map(c => this.formatCustomer(c)),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   /**
@@ -138,10 +171,10 @@ export class CustomersService {
   }
 
   /**
-   * 6. Get Customer Ledger Statement History
+   * 6. Get Customer Ledger Statement History (Paginated)
    * কাস্টমারের সমস্ত কেনাবেচা, জমা এবং পণ্য ফেরতের কালানুক্রমিক হিসেব বিবরণী।
    */
-  async getLedger(customerId: string, user: any) {
+  async getLedger(customerId: string, user: any, query: any = {}) {
     const customer = await this.customerModel.findOne({
       _id: customerId,
       shopId: user.shopId,
@@ -149,21 +182,44 @@ export class CustomersService {
     });
     if (!customer) throw new NotFoundException('Customer not found');
 
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter = { customerId, shopId: user.shopId, isDeleted: { $ne: true } };
+    const sortField = query.sortBy || 'date';
+    const sortDirection = query.sortOrder === 'desc' ? -1 : 1; // Default ascending for ledger
+
+    const total = await this.ledgerModel.countDocuments(filter);
     const records = await this.ledgerModel
-      .find({ customerId, shopId: user.shopId, isDeleted: { $ne: true } })
-      .sort({ date: 1 })
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
       .exec();
 
-    return records.map(r => ({
-      id: r._id.toString(),
-      type: r.type,
-      referenceId: r.referenceId,
-      date: r.date,
-      description: r.description,
-      amount: r.amount.toString(),
-      previousBalance: r.previousBalance.toString(),
-      newBalance: r.newBalance.toString(),
-    }));
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: records.map(r => ({
+        id: r._id.toString(),
+        type: r.type,
+        referenceId: r.referenceId,
+        date: r.date,
+        description: r.description,
+        amount: r.amount.toString(),
+        previousBalance: r.previousBalance.toString(),
+        newBalance: r.newBalance.toString(),
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   /**

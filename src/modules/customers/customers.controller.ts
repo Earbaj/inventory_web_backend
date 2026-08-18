@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { Permissions } from '../../common/decorators/permissions.decorator';
@@ -30,12 +31,12 @@ export class CustomersController {
 
   /**
    * 2. List All Active Customers Endpoint
-   * নিজের শপের এক্টিভ কাস্টমারদের তালিকা পাওয়া।
+   * নিজের শপের এক্টিভ কাস্টমারদের পেজিনেটেড তালিকা পাওয়া।
    */
   @Get()
-  @ApiOperation({ summary: 'List all shop customers' })
-  findAll(@GetUser() user: any) {
-    return this.customersService.findAll(user);
+  @ApiOperation({ summary: 'List all shop customers (Paginated)' })
+  findAll(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.customersService.findAll(user, query);
   }
 
   /**
@@ -80,8 +81,8 @@ export class CustomersController {
    * কাস্টমারের সম্পূর্ণ লেনদেনের স্টেটমেন্ট বা হিসাবের খাতা পাওয়া।
    */
   @Get(':id/ledger')
-  @ApiOperation({ summary: 'Get transaction statement ledger for customer' })
-  getLedger(@Param('id') id: string, @GetUser() user: any) {
-    return this.customersService.getLedger(id, user);
+  @ApiOperation({ summary: 'Get transaction statement ledger for customer (Paginated)' })
+  getLedger(@Param('id') id: string, @GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.customersService.getLedger(id, user, query);
   }
 }
