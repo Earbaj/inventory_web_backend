@@ -1,5 +1,6 @@
 import { InventoryService } from './inventory.service';
-import { CreateItemDto, UpdateItemDto, UpdateStockDto, CreateCategoryDto } from './dto/inventory.dto';
+import { CreateItemDto, UpdateItemDto, UpdateStockDto, CreateCategoryDto, QueryItemDto } from './dto/inventory.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 export declare class InventoryController {
     private readonly inventoryService;
     constructor(inventoryService: InventoryService);
@@ -17,34 +18,54 @@ export declare class InventoryController {
         reorderLevel: number;
         isLowStock: boolean;
     }>;
-    findAllItems(user: any, category?: string): Promise<{
-        id: string;
-        name: string;
-        sku: string;
-        code: string;
-        category: string;
-        sellPrice: string;
-        buyPrice: string;
-        stockQuantity: number;
-        unit: string;
-        lowStockThreshold: number;
-        reorderLevel: number;
-        isLowStock: boolean;
-    }[]>;
-    findLowStockItems(user: any): Promise<{
-        id: string;
-        name: string;
-        sku: string;
-        code: string;
-        category: string;
-        sellPrice: string;
-        buyPrice: string;
-        stockQuantity: number;
-        unit: string;
-        lowStockThreshold: number;
-        reorderLevel: number;
-        isLowStock: boolean;
-    }[]>;
+    findAllItems(user: any, query: QueryItemDto): Promise<{
+        data: {
+            id: string;
+            name: string;
+            sku: string;
+            code: string;
+            category: string;
+            sellPrice: string;
+            buyPrice: string;
+            stockQuantity: number;
+            unit: string;
+            lowStockThreshold: number;
+            reorderLevel: number;
+            isLowStock: boolean;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
+    findLowStockItems(user: any, query: PaginationQueryDto): Promise<{
+        data: {
+            id: string;
+            name: string;
+            sku: string;
+            code: string;
+            category: string;
+            sellPrice: string;
+            buyPrice: string;
+            stockQuantity: number;
+            unit: string;
+            lowStockThreshold: number;
+            reorderLevel: number;
+            isLowStock: boolean;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
     findOneItem(id: string, user: any): Promise<{
         id: string;
         name: string;
@@ -90,11 +111,21 @@ export declare class InventoryController {
     removeItem(id: string, user: any): Promise<{
         message: string;
     }>;
-    findAllCategories(user: any): Promise<{
-        id: string;
-        name: string;
-        description: string;
-    }[]>;
+    findAllCategories(user: any, query: PaginationQueryDto): Promise<{
+        data: {
+            id: string;
+            name: string;
+            description: string;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
     createCategory(createCategoryDto: CreateCategoryDto, user: any): Promise<{
         id: string;
         name: string;

@@ -28,8 +28,8 @@ let DashboardController = class DashboardController {
     getSuperAdminDashboard(user) {
         return this.dashboardService.getSuperAdminDashboard(user);
     }
-    getSalesReport(user, startDate, endDate, cashierId) {
-        return this.dashboardService.getSalesReport(user, startDate, endDate, cashierId);
+    getSalesReport(user, startDate, endDate, cashierId, page, limit) {
+        return this.dashboardService.getSalesReport(user, startDate, endDate, cashierId, page, limit);
     }
 };
 exports.DashboardController = DashboardController;
@@ -51,16 +51,20 @@ __decorate([
 ], DashboardController.prototype, "getSuperAdminDashboard", null);
 __decorate([
     (0, common_1.Get)('reports/sales'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get aggregated sales report filtered by date range and cashier' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get aggregated sales report filtered by date range, cashier, and pagination' }),
     (0, swagger_1.ApiQuery)({ name: 'startDate', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'endDate', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'cashierId', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
     __param(3, (0, common_1.Query)('cashierId')),
+    __param(4, (0, common_1.Query)('page')),
+    __param(5, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, Number, Number]),
     __metadata("design:returntype", void 0)
 ], DashboardController.prototype, "getSalesReport", null);
 exports.DashboardController = DashboardController = __decorate([

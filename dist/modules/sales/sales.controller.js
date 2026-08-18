@@ -26,8 +26,8 @@ let SalesController = class SalesController {
     createSale(createSaleDto, user) {
         return this.salesService.createSale(createSaleDto, user);
     }
-    findAllSales(user, cashierId, paymentStatus) {
-        return this.salesService.findAllSales(user, cashierId, paymentStatus);
+    findAllSales(user, query) {
+        return this.salesService.findAllSales(user, query);
     }
     findByInvoice(invoiceNumber, user) {
         return this.salesService.findByInvoice(invoiceNumber, user);
@@ -48,14 +48,11 @@ __decorate([
 ], SalesController.prototype, "createSale", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List all sales invoices' }),
-    (0, swagger_1.ApiQuery)({ name: 'cashierId', required: false }),
-    (0, swagger_1.ApiQuery)({ name: 'paymentStatus', required: false }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all sales invoices (Paginated)' }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
-    __param(1, (0, common_1.Query)('cashierId')),
-    __param(2, (0, common_1.Query)('paymentStatus')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [Object, sales_dto_1.QuerySalesDto]),
     __metadata("design:returntype", void 0)
 ], SalesController.prototype, "findAllSales", null);
 __decorate([

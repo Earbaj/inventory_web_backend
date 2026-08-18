@@ -1,3 +1,4 @@
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 export declare class SaleItemDto {
     itemId: string;
     quantity: number;
@@ -12,4 +13,10 @@ export declare class CreateSaleDto {
     items: SaleItemDto[];
     discount?: number;
     paidAmount: number;
+}
+export declare class QuerySalesDto extends PaginationQueryDto {
+    cashierId?: string;
+    paymentStatus?: string;
+    startDate?: string;
+    endDate?: string;
 }

@@ -14,6 +14,7 @@ const serve_static_1 = require("@nestjs/serve-static");
 const throttler_1 = require("@nestjs/throttler");
 const core_1 = require("@nestjs/core");
 const path_1 = require("path");
+const app_controller_1 = require("./app.controller");
 const auth_module_1 = require("./modules/auth/auth.module");
 const customers_module_1 = require("./modules/customers/customers.module");
 const inventory_module_1 = require("./modules/inventory/inventory.module");
@@ -58,6 +59,7 @@ exports.AppModule = AppModule = __decorate([
             trash_module_1.TrashModule,
             seed_module_1.SeedModule,
         ],
+        controllers: [app_controller_1.AppController],
         providers: [
             {
                 provide: core_1.APP_GUARD,

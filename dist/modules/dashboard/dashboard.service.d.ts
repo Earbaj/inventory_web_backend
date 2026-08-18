@@ -22,7 +22,7 @@ export declare class DashboardService {
         totalCustomerDue: string;
         totalInvoicesCount: number;
     }>;
-    getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string): Promise<{
+    getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string, pageParam?: number, limitParam?: number): Promise<{
         totalRevenue: string;
         totalDiscount: string;
         totalInvoices: number;
@@ -33,15 +33,25 @@ export declare class DashboardService {
             quantity: number;
         }[];
         salesList: {
-            id: string;
-            invoiceNumber: string;
-            customerName: string;
-            grandTotal: string;
-            paidAmount: string;
-            paymentStatus: string;
-            date: Date;
-            createdByName: string;
-        }[];
+            data: {
+                id: string;
+                invoiceNumber: string;
+                customerName: string;
+                grandTotal: string;
+                paidAmount: string;
+                paymentStatus: string;
+                date: Date;
+                createdByName: string;
+            }[];
+            meta: {
+                total: number;
+                page: number;
+                limit: number;
+                totalPages: number;
+                hasNextPage: boolean;
+                hasPrevPage: boolean;
+            };
+        };
     }>;
     getSuperAdminDashboard(user: any): Promise<{
         totalRegisteredShops: number;

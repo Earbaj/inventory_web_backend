@@ -207,13 +207,64 @@ let AuthService = AuthService_1 = class AuthService {
             permissions: user.permissions,
         };
     }
-    async getAllUsers(loggedInUser) {
-        const query = {};
+    async getAllUsers(loggedInUser, query = {}) {
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = {};
         if (loggedInUser.role !== 'superadmin') {
-            query.shopId = loggedInUser.shopId;
+            filter.shopId = loggedInUser.shopId;
         }
-        const users = await this.userModel.find(query).select('-passwordHash').exec();
-        return users.map(user => ({
+        if (query.search) {
+            filter.$or = [
+                { name: { $regex: query.search, $options: 'i' } },
+                { email: { $regex: query.search, $options: 'i' } },
+                { role: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'createdAt';
+        const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+        const total = await this.userModel.countDocuments(filter);
+        const users = await this.userModel
+            .find(filter)
+            .select('-passwordHash')
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: users.map(user => ({
+                id: user._id.toString(),
+                uid: user._id.toString(),
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                shopId: user.shopId,
+                subscriptionTier: user.subscriptionTier,
+                subscriptionExpiresAt: user.subscriptionExpiresAt,
+                permissions: user.permissions,
+            })),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
+    }
+    async getUserById(uid, loggedInUser) {
+        const user = await this.userModel.findById(uid).select('-passwordHash');
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        if (loggedInUser.role !== 'superadmin' && user.shopId !== loggedInUser.shopId) {
+            throw new common_1.ForbiddenException('Cannot access user from another shop');
+        }
+        return {
+            id: user._id.toString(),
             uid: user._id.toString(),
             email: user.email,
             name: user.name,
@@ -222,7 +273,7 @@ let AuthService = AuthService_1 = class AuthService {
             subscriptionTier: user.subscriptionTier,
             subscriptionExpiresAt: user.subscriptionExpiresAt,
             permissions: user.permissions,
-        }));
+        };
     }
     async updateUserPermissions(uid, permissions, loggedInUser) {
         const user = await this.userModel.findById(uid);
@@ -264,6 +315,89 @@ let AuthService = AuthService_1 = class AuthService {
         }
         await this.userModel.findByIdAndDelete(uid);
         return { message: 'User deleted successfully' };
+    }
+    async getShopsList(loggedInUser, query = {}) {
+        if (loggedInUser.role !== 'superadmin') {
+            throw new common_1.ForbiddenException('Only SuperAdmin can view registered shops list');
+        }
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = { role: 'admin' };
+        if (query.subscriptionTier) {
+            filter.subscriptionTier = query.subscriptionTier;
+        }
+        if (query.search) {
+            filter.$or = [
+                { name: { $regex: query.search, $options: 'i' } },
+                { email: { $regex: query.search, $options: 'i' } },
+                { shopId: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'createdAt';
+        const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+        const total = await this.userModel.countDocuments(filter);
+        const shopOwners = await this.userModel
+            .find(filter)
+            .select('-passwordHash')
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const data = await Promise.all(shopOwners.map(async (owner) => {
+            const sId = owner.shopId || owner._id.toString();
+            const managerCount = await this.userModel.countDocuments({ role: 'manager', shopId: sId });
+            return {
+                id: owner._id.toString(),
+                shopId: sId,
+                name: owner.name,
+                email: owner.email,
+                role: owner.role,
+                subscriptionTier: owner.subscriptionTier || 'free',
+                subscriptionExpiresAt: owner.subscriptionExpiresAt || null,
+                managerCount,
+                createdAt: owner.createdAt || new Date(),
+            };
+        }));
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
+    }
+    async getShopById(id, loggedInUser) {
+        if (loggedInUser.role !== 'superadmin') {
+            throw new common_1.ForbiddenException('Only SuperAdmin can view shop details');
+        }
+        const owner = await this.userModel.findOne({ _id: id, role: 'admin' }).select('-passwordHash');
+        if (!owner) {
+            throw new common_1.NotFoundException('Shop record not found');
+        }
+        const sId = owner.shopId || owner._id.toString();
+        const managers = await this.userModel.find({ role: 'manager', shopId: sId }).select('-passwordHash');
+        return {
+            id: owner._id.toString(),
+            shopId: sId,
+            name: owner.name,
+            email: owner.email,
+            role: owner.role,
+            subscriptionTier: owner.subscriptionTier || 'free',
+            subscriptionExpiresAt: owner.subscriptionExpiresAt || null,
+            managers: managers.map(m => ({
+                uid: m._id.toString(),
+                name: m.name,
+                email: m.email,
+                permissions: m.permissions,
+            })),
+            createdAt: owner.createdAt || new Date(),
+        };
     }
 };
 exports.AuthService = AuthService;

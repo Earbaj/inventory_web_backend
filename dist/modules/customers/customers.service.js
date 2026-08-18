@@ -59,11 +59,39 @@ let CustomersService = class CustomersService {
         await ledger.save();
         return this.formatCustomer(saved);
     }
-    async findAll(user) {
+    async findAll(user, query = {}) {
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = { shopId: user.shopId, isDeleted: { $ne: true } };
+        if (query.search) {
+            filter.$or = [
+                { name: { $regex: query.search, $options: 'i' } },
+                { phone: { $regex: query.search, $options: 'i' } },
+                { address: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'createdAt';
+        const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+        const total = await this.customerModel.countDocuments(filter);
         const customers = await this.customerModel
-            .find({ shopId: user.shopId, isDeleted: { $ne: true } })
+            .find(filter)
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
             .exec();
-        return customers.map(c => this.formatCustomer(c));
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: customers.map(c => this.formatCustomer(c)),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
     }
     async findOne(id, user) {
         const customer = await this.customerModel.findOne({
@@ -107,7 +135,7 @@ let CustomersService = class CustomersService {
         await this.ledgerModel.updateMany({ customerId: id, shopId: user.shopId }, { isDeleted: true, deletedAt: new Date(), deletedBy: user.uid || user.id });
         return { message: 'Customer moved to trash (Soft deleted). Can be restored from Recycle Bin.' };
     }
-    async getLedger(customerId, user) {
+    async getLedger(customerId, user, query = {}) {
         const customer = await this.customerModel.findOne({
             _id: customerId,
             shopId: user.shopId,
@@ -115,20 +143,40 @@ let CustomersService = class CustomersService {
         });
         if (!customer)
             throw new common_1.NotFoundException('Customer not found');
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = { customerId, shopId: user.shopId, isDeleted: { $ne: true } };
+        const sortField = query.sortBy || 'date';
+        const sortDirection = query.sortOrder === 'desc' ? -1 : 1;
+        const total = await this.ledgerModel.countDocuments(filter);
         const records = await this.ledgerModel
-            .find({ customerId, shopId: user.shopId, isDeleted: { $ne: true } })
-            .sort({ date: 1 })
+            .find(filter)
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
             .exec();
-        return records.map(r => ({
-            id: r._id.toString(),
-            type: r.type,
-            referenceId: r.referenceId,
-            date: r.date,
-            description: r.description,
-            amount: r.amount.toString(),
-            previousBalance: r.previousBalance.toString(),
-            newBalance: r.newBalance.toString(),
-        }));
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: records.map(r => ({
+                id: r._id.toString(),
+                type: r.type,
+                referenceId: r.referenceId,
+                date: r.date,
+                description: r.description,
+                amount: r.amount.toString(),
+                previousBalance: r.previousBalance.toString(),
+                newBalance: r.newBalance.toString(),
+            })),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
     }
     formatCustomer(customer) {
         return {

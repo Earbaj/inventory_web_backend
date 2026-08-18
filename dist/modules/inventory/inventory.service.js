@@ -48,17 +48,77 @@ let InventoryService = class InventoryService {
         const saved = await item.save();
         return this.formatItem(saved, user);
     }
-    async findAllItems(user, category) {
-        const query = { shopId: user.shopId, isDeleted: { $ne: true } };
-        if (category)
-            query.category = category;
-        const items = await this.itemModel.find(query).exec();
-        return items.map(item => this.formatItem(item, user));
+    async findAllItems(user, query = {}) {
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = { shopId: user.shopId, isDeleted: { $ne: true } };
+        if (query.category)
+            filter.category = query.category;
+        if (query.search) {
+            filter.$or = [
+                { name: { $regex: query.search, $options: 'i' } },
+                { sku: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'createdAt';
+        const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+        const total = await this.itemModel.countDocuments(filter);
+        const items = await this.itemModel
+            .find(filter)
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: items.map(item => this.formatItem(item, user)),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
     }
-    async findLowStockItems(user) {
-        const items = await this.itemModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
-        const lowStock = items.filter(i => i.stockQuantity <= i.lowStockThreshold);
-        return lowStock.map(item => this.formatItem(item, user));
+    async findLowStockItems(user, query = {}) {
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = {
+            shopId: user.shopId,
+            isDeleted: { $ne: true },
+            $expr: { $lte: ['$stockQuantity', '$lowStockThreshold'] },
+        };
+        if (query.search) {
+            filter.$or = [
+                { name: { $regex: query.search, $options: 'i' } },
+                { sku: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'stockQuantity';
+        const sortDirection = query.sortOrder === 'desc' ? -1 : 1;
+        const total = await this.itemModel.countDocuments(filter);
+        const items = await this.itemModel
+            .find(filter)
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: items.map(item => this.formatItem(item, user)),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
     }
     async findOneItem(id, user) {
         const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
@@ -129,13 +189,42 @@ let InventoryService = class InventoryService {
             description: saved.description,
         };
     }
-    async findAllCategories(user) {
-        const categories = await this.categoryModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).exec();
-        return categories.map(c => ({
-            id: c._id.toString(),
-            name: c.name,
-            description: c.description,
-        }));
+    async findAllCategories(user, query = {}) {
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = { shopId: user.shopId, isDeleted: { $ne: true } };
+        if (query.search) {
+            filter.$or = [
+                { name: { $regex: query.search, $options: 'i' } },
+                { description: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'name';
+        const sortDirection = query.sortOrder === 'desc' ? -1 : 1;
+        const total = await this.categoryModel.countDocuments(filter);
+        const categories = await this.categoryModel
+            .find(filter)
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: categories.map(c => ({
+                id: c._id.toString(),
+                name: c.name,
+                description: c.description,
+            })),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
     }
     formatItem(item, user) {
         const canViewBuy = user.role === 'admin' || user.permissions?.canViewBuyPrice;

@@ -9,9 +9,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateCategoryDto = exports.UpdateStockDto = exports.UpdateItemDto = exports.CreateItemDto = void 0;
+exports.QueryItemDto = exports.CreateCategoryDto = exports.UpdateStockDto = exports.UpdateItemDto = exports.CreateItemDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const pagination_dto_1 = require("../../../common/dto/pagination.dto");
 class CreateItemDto {
 }
 exports.CreateItemDto = CreateItemDto;
@@ -140,4 +141,13 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateCategoryDto.prototype, "description", void 0);
+class QueryItemDto extends pagination_dto_1.PaginationQueryDto {
+}
+exports.QueryItemDto = QueryItemDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Electronics', description: 'পণ্যের ক্যাটাগরি ফিল্টার' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryItemDto.prototype, "category", void 0);
 //# sourceMappingURL=inventory.dto.js.map

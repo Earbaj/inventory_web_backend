@@ -14,14 +14,24 @@ export declare class CustomersService {
         openingBalance: string;
         closingBalance: string;
     }>;
-    findAll(user: any): Promise<{
-        id: string;
-        name: string;
-        phone: string;
-        address: string;
-        openingBalance: string;
-        closingBalance: string;
-    }[]>;
+    findAll(user: any, query?: any): Promise<{
+        data: {
+            id: string;
+            name: string;
+            phone: string;
+            address: string;
+            openingBalance: string;
+            closingBalance: string;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
     findOne(id: string, user: any): Promise<{
         id: string;
         name: string;
@@ -41,15 +51,25 @@ export declare class CustomersService {
     remove(id: string, user: any): Promise<{
         message: string;
     }>;
-    getLedger(customerId: string, user: any): Promise<{
-        id: string;
-        type: string;
-        referenceId: string;
-        date: Date;
-        description: string;
-        amount: string;
-        previousBalance: string;
-        newBalance: string;
-    }[]>;
+    getLedger(customerId: string, user: any, query?: any): Promise<{
+        data: {
+            id: string;
+            type: string;
+            referenceId: string;
+            date: Date;
+            description: string;
+            amount: string;
+            previousBalance: string;
+            newBalance: string;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
     private formatCustomer;
 }

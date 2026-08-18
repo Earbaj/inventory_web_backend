@@ -36,32 +36,42 @@ export declare class SalesService {
         createdByName: string;
         isReturned: string;
     }>;
-    findAllSales(user: any, cashierId?: string, paymentStatus?: string): Promise<{
-        id: string;
-        invoiceNumber: string;
-        customerId: string;
-        customerName: string;
-        customerPhone: string;
-        items: {
-            itemId: string;
-            name: string;
-            quantity: number;
-            unitPrice: string;
+    findAllSales(user: any, query?: any): Promise<{
+        data: {
+            id: string;
+            invoiceNumber: string;
+            customerId: string;
+            customerName: string;
+            customerPhone: string;
+            items: {
+                itemId: string;
+                name: string;
+                quantity: number;
+                unitPrice: string;
+                discount: string;
+                discountType: string;
+                totalPrice: string;
+            }[];
+            subtotal: string;
             discount: string;
-            discountType: string;
-            totalPrice: string;
+            grandTotal: string;
+            paidAmount: string;
+            dueAmount: string;
+            paymentStatus: string;
+            date: Date;
+            createdBy: string;
+            createdByName: string;
+            isReturned: string;
         }[];
-        subtotal: string;
-        discount: string;
-        grandTotal: string;
-        paidAmount: string;
-        dueAmount: string;
-        paymentStatus: string;
-        date: Date;
-        createdBy: string;
-        createdByName: string;
-        isReturned: string;
-    }[]>;
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
     findOneSale(id: string, user: any): Promise<{
         id: string;
         invoiceNumber: string;

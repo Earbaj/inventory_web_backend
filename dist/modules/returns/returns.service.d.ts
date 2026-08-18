@@ -22,19 +22,29 @@ export declare class ReturnsService {
         date: Date;
         processedBy: string;
     }>;
-    findAllReturns(user: any): Promise<{
-        id: string;
-        customerId: string;
-        saleId: string;
-        invoiceNumber: string;
-        returnedItems: {
-            itemId: string;
-            name: string;
-            quantity: number;
-            refundAmountPerUnit: string;
+    findAllReturns(user: any, query?: any): Promise<{
+        data: {
+            id: string;
+            customerId: string;
+            saleId: string;
+            invoiceNumber: string;
+            returnedItems: {
+                itemId: string;
+                name: string;
+                quantity: number;
+                refundAmountPerUnit: string;
+            }[];
+            totalRefund: string;
+            date: Date;
+            processedBy: string;
         }[];
-        totalRefund: string;
-        date: Date;
-        processedBy: string;
-    }[]>;
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
 }

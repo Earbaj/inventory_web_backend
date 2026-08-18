@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
 const auth_dto_1 = require("./dto/auth.dto");
+const pagination_dto_1 = require("../../common/dto/pagination.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
 const roles_decorator_1 = require("../../common/decorators/roles.decorator");
@@ -43,13 +44,25 @@ let AuthController = class AuthController {
     getProfile(user) {
         return user;
     }
-    getAllUsers(user) {
-        return this.authService.getAllUsers(user);
+    getAllUsers(user, query) {
+        return this.authService.getAllUsers(user, query);
+    }
+    getStaffMembers(user, query) {
+        return this.authService.getAllUsers(user, query);
+    }
+    getStaffById(id, user) {
+        return this.authService.getUserById(id, user);
     }
     createUser(createUserDto, user) {
         return this.authService.createUser(createUserDto, user);
     }
+    createStaff(createUserDto, user) {
+        return this.authService.createUser(createUserDto, user);
+    }
     updateUserPermissions(id, updatePermissionsDto, user) {
+        return this.authService.updateUserPermissions(id, updatePermissionsDto.permissions, user);
+    }
+    updateStaffPermissions(id, updatePermissionsDto, user) {
         return this.authService.updateUserPermissions(id, updatePermissionsDto.permissions, user);
     }
     changePassword(uid, changePasswordDto) {
@@ -57,6 +70,15 @@ let AuthController = class AuthController {
     }
     deleteUser(id, user) {
         return this.authService.deleteUser(id, user);
+    }
+    deleteStaff(id, user) {
+        return this.authService.deleteUser(id, user);
+    }
+    getShopsList(user, query) {
+        return this.authService.getShopsList(user, query);
+    }
+    getShopById(id, user) {
+        return this.authService.getShopById(id, user);
     }
 };
 exports.AuthController = AuthController;
@@ -114,16 +136,38 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "getProfile", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Get)('users'),
-    (0, swagger_1.ApiOperation)({ summary: 'List all shop users (Admin/SuperAdmin only)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all shop users (Paginated)' }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "getAllUsers", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Get)('staff'),
+    (0, swagger_1.ApiOperation)({ summary: 'List all staff members for current shop (Paginated)' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getStaffMembers", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Get)('staff/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get staff member details by ID' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getStaffById", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin', 'superadmin'),
@@ -140,6 +184,18 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin', 'superadmin'),
     (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Post)('staff'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new staff member account (Alias for POST /api/users)' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.CreateUserDto, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "createStaff", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Patch)('users/:id/permissions'),
     (0, swagger_1.ApiOperation)({ summary: 'Update manager permissions (Admin only)' }),
     __param(0, (0, common_1.Param)('id')),
@@ -149,6 +205,19 @@ __decorate([
     __metadata("design:paramtypes", [String, auth_dto_1.UpdatePermissionsDto, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "updateUserPermissions", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Patch)('staff/:id/permissions'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update staff permissions (Alias for PATCH /api/users/:id/permissions)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, auth_dto_1.UpdatePermissionsDto, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "updateStaffPermissions", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
@@ -172,6 +241,42 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "deleteUser", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin', 'superadmin'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Delete)('staff/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete staff account (Alias for DELETE /api/users/:id)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "deleteStaff", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('superadmin'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Get)('admin/shops'),
+    (0, swagger_1.ApiOperation)({ summary: 'List all registered shop accounts (SuperAdmin only) (Paginated)' }),
+    __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getShopsList", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('superadmin'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.Get)('admin/shops/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get shop details by ID (SuperAdmin only)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getShopById", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Authentication & Users'),
     (0, common_1.Controller)('api'),

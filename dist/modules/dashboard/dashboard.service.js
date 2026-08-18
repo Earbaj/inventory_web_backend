@@ -75,7 +75,10 @@ let DashboardService = class DashboardService {
             totalInvoicesCount: sales.length,
         };
     }
-    async getSalesReport(user, startDate, endDate, cashierId) {
+    async getSalesReport(user, startDate, endDate, cashierId, pageParam = 1, limitParam = 10) {
+        const page = Math.max(1, Number(pageParam) || 1);
+        const limit = Math.max(1, Math.min(100, Number(limitParam) || 10));
+        const skip = (page - 1) * limit;
         const query = { shopId: user.shopId, isDeleted: { $ne: true } };
         if (cashierId)
             query.createdBy = cashierId;
@@ -83,8 +86,11 @@ let DashboardService = class DashboardService {
             query.date = {};
             if (startDate)
                 query.date.$gte = new Date(startDate);
-            if (endDate)
-                query.date.$lte = new Date(endDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                query.date.$lte = end;
+            }
         }
         const sales = await this.saleModel.find(query).sort({ date: -1 }).exec();
         let totalRevenue = 0;
@@ -102,25 +108,38 @@ let DashboardService = class DashboardService {
                 itemsSummary.set(item.itemId, existing);
             }
         }
+        const totalInvoices = sales.length;
+        const paginatedSales = sales.slice(skip, skip + limit);
+        const totalPages = Math.ceil(totalInvoices / limit) || 1;
         return {
             totalRevenue: totalRevenue.toString(),
             totalDiscount: totalDiscount.toString(),
-            totalInvoices: sales.length,
+            totalInvoices,
             totalItemsSold,
             topSellingItems: Array.from(itemsSummary.values())
                 .sort((a, b) => b.quantity - a.quantity)
                 .slice(0, 10)
                 .map(i => ({ ...i, revenue: i.revenue.toString() })),
-            salesList: sales.map(s => ({
-                id: s._id.toString(),
-                invoiceNumber: s.invoiceNumber,
-                customerName: s.customerName,
-                grandTotal: s.grandTotal.toString(),
-                paidAmount: s.paidAmount.toString(),
-                paymentStatus: s.paymentStatus,
-                date: s.date,
-                createdByName: s.createdByName,
-            })),
+            salesList: {
+                data: paginatedSales.map(s => ({
+                    id: s._id.toString(),
+                    invoiceNumber: s.invoiceNumber,
+                    customerName: s.customerName,
+                    grandTotal: s.grandTotal.toString(),
+                    paidAmount: s.paidAmount.toString(),
+                    paymentStatus: s.paymentStatus,
+                    date: s.date,
+                    createdByName: s.createdByName,
+                })),
+                meta: {
+                    total: totalInvoices,
+                    page,
+                    limit,
+                    totalPages,
+                    hasNextPage: page < totalPages,
+                    hasPrevPage: page > 1,
+                },
+            },
         };
     }
     async getSuperAdminDashboard(user) {

@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const returns_service_1 = require("./returns.service");
 const return_dto_1 = require("./dto/return.dto");
+const pagination_dto_1 = require("../../common/dto/pagination.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const permissions_guard_1 = require("../../common/guards/permissions.guard");
 const permissions_decorator_1 = require("../../common/decorators/permissions.decorator");
@@ -28,8 +29,8 @@ let ReturnsController = class ReturnsController {
     processReturn(processReturnDto, user) {
         return this.returnsService.processReturn(processReturnDto, user);
     }
-    findAllReturns(user) {
-        return this.returnsService.findAllReturns(user);
+    findAllReturns(user, query) {
+        return this.returnsService.findAllReturns(user, query);
     }
 };
 exports.ReturnsController = ReturnsController;
@@ -46,10 +47,11 @@ __decorate([
 ], ReturnsController.prototype, "processReturn", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List return transaction history' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List return transaction history (Paginated)' }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
     __metadata("design:returntype", void 0)
 ], ReturnsController.prototype, "findAllReturns", null);
 exports.ReturnsController = ReturnsController = __decorate([

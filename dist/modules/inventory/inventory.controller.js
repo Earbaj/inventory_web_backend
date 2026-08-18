@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const inventory_service_1 = require("./inventory.service");
 const inventory_dto_1 = require("./dto/inventory.dto");
+const pagination_dto_1 = require("../../common/dto/pagination.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const get_user_decorator_1 = require("../../common/decorators/get-user.decorator");
 let InventoryController = class InventoryController {
@@ -26,11 +27,11 @@ let InventoryController = class InventoryController {
     createItem(createItemDto, user) {
         return this.inventoryService.createItem(createItemDto, user);
     }
-    findAllItems(user, category) {
-        return this.inventoryService.findAllItems(user, category);
+    findAllItems(user, query) {
+        return this.inventoryService.findAllItems(user, query);
     }
-    findLowStockItems(user) {
-        return this.inventoryService.findLowStockItems(user);
+    findLowStockItems(user, query) {
+        return this.inventoryService.findLowStockItems(user, query);
     }
     findOneItem(id, user) {
         return this.inventoryService.findOneItem(id, user);
@@ -44,8 +45,8 @@ let InventoryController = class InventoryController {
     removeItem(id, user) {
         return this.inventoryService.removeItem(id, user);
     }
-    findAllCategories(user) {
-        return this.inventoryService.findAllCategories(user);
+    findAllCategories(user, query) {
+        return this.inventoryService.findAllCategories(user, query);
     }
     createCategory(createCategoryDto, user) {
         return this.inventoryService.createCategory(createCategoryDto, user);
@@ -63,20 +64,20 @@ __decorate([
 ], InventoryController.prototype, "createItem", null);
 __decorate([
     (0, common_1.Get)('items'),
-    (0, swagger_1.ApiOperation)({ summary: 'List all inventory product items' }),
-    (0, swagger_1.ApiQuery)({ name: 'category', required: false }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all inventory product items (Paginated)' }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
-    __param(1, (0, common_1.Query)('category')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object, inventory_dto_1.QueryItemDto]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "findAllItems", null);
 __decorate([
     (0, common_1.Get)('items/low-stock'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get items with low stock warning (stockQuantity <= lowStockThreshold)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get items with low stock warning (stockQuantity <= lowStockThreshold) (Paginated)' }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "findLowStockItems", null);
 __decorate([
@@ -119,10 +120,11 @@ __decorate([
 ], InventoryController.prototype, "removeItem", null);
 __decorate([
     (0, common_1.Get)('categories'),
-    (0, swagger_1.ApiOperation)({ summary: 'List all product categories' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all product categories (Paginated)' }),
     __param(0, (0, get_user_decorator_1.GetUser)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "findAllCategories", null);
 __decorate([

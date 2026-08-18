@@ -150,14 +150,53 @@ let SalesService = class SalesService {
         }
         return this.formatSale(savedSale);
     }
-    async findAllSales(user, cashierId, paymentStatus) {
-        const query = { shopId: user.shopId, isDeleted: { $ne: true } };
-        if (cashierId)
-            query.createdBy = cashierId;
-        if (paymentStatus)
-            query.paymentStatus = paymentStatus;
-        const sales = await this.saleModel.find(query).sort({ createdAt: -1 }).exec();
-        return sales.map(s => this.formatSale(s));
+    async findAllSales(user, query = {}) {
+        const page = Math.max(1, Number(query.page) || 1);
+        const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+        const skip = (page - 1) * limit;
+        const filter = { shopId: user.shopId, isDeleted: { $ne: true } };
+        if (query.cashierId)
+            filter.createdBy = query.cashierId;
+        if (query.paymentStatus)
+            filter.paymentStatus = query.paymentStatus;
+        if (query.startDate || query.endDate) {
+            filter.date = {};
+            if (query.startDate)
+                filter.date.$gte = new Date(query.startDate);
+            if (query.endDate) {
+                const end = new Date(query.endDate);
+                end.setHours(23, 59, 59, 999);
+                filter.date.$lte = end;
+            }
+        }
+        if (query.search) {
+            filter.$or = [
+                { invoiceNumber: { $regex: query.search, $options: 'i' } },
+                { customerName: { $regex: query.search, $options: 'i' } },
+                { customerPhone: { $regex: query.search, $options: 'i' } },
+            ];
+        }
+        const sortField = query.sortBy || 'date';
+        const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+        const total = await this.saleModel.countDocuments(filter);
+        const sales = await this.saleModel
+            .find(filter)
+            .sort({ [sortField]: sortDirection })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        const totalPages = Math.ceil(total / limit) || 1;
+        return {
+            data: sales.map(s => this.formatSale(s)),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+            },
+        };
     }
     async findOneSale(id, user) {
         const sale = await this.saleModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });

@@ -9,10 +9,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSaleDto = exports.SaleItemDto = void 0;
+exports.QuerySalesDto = exports.CreateSaleDto = exports.SaleItemDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
+const pagination_dto_1 = require("../../../common/dto/pagination.dto");
 class SaleItemDto {
 }
 exports.SaleItemDto = SaleItemDto;
@@ -88,4 +89,31 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateSaleDto.prototype, "paidAmount", void 0);
+class QuerySalesDto extends pagination_dto_1.PaginationQueryDto {
+}
+exports.QuerySalesDto = QuerySalesDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '65c1a2b3c4d5e6f7a8b9c0d1', description: 'ক্যাশিয়ার ইউজারের আইডি ফিল্টার' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QuerySalesDto.prototype, "cashierId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'paid', enum: ['paid', 'due', 'partial'], description: 'পেমেন্ট স্ট্যাটাস ফিল্টার' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QuerySalesDto.prototype, "paymentStatus", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '2026-01-01', description: 'শুরুর তারিখ (YYYY-MM-DD)' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QuerySalesDto.prototype, "startDate", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '2026-12-31', description: 'শেষের তারিখ (YYYY-MM-DD)' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QuerySalesDto.prototype, "endDate", void 0);
 //# sourceMappingURL=sales.dto.js.map

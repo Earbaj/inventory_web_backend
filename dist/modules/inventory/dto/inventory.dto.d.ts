@@ -1,3 +1,4 @@
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 export declare class CreateItemDto {
     name: string;
     sku?: string;
@@ -24,4 +25,7 @@ export declare class UpdateStockDto {
 export declare class CreateCategoryDto {
     name: string;
     description?: string;
+}
+export declare class QueryItemDto extends PaginationQueryDto {
+    category?: string;
 }

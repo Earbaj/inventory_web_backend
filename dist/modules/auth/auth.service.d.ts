@@ -60,7 +60,29 @@ export declare class AuthService {
         shopId: string;
         permissions: import("./schemas/user.schema").ManagerPermissions;
     }>;
-    getAllUsers(loggedInUser: any): Promise<{
+    getAllUsers(loggedInUser: any, query?: any): Promise<{
+        data: {
+            id: string;
+            uid: string;
+            email: string;
+            name: string;
+            role: string;
+            shopId: string;
+            subscriptionTier: string;
+            subscriptionExpiresAt: Date;
+            permissions: import("./schemas/user.schema").ManagerPermissions;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
+    getUserById(uid: string, loggedInUser: any): Promise<{
+        id: string;
         uid: string;
         email: string;
         name: string;
@@ -69,7 +91,7 @@ export declare class AuthService {
         subscriptionTier: string;
         subscriptionExpiresAt: Date;
         permissions: import("./schemas/user.schema").ManagerPermissions;
-    }[]>;
+    }>;
     updateUserPermissions(uid: string, permissions: PermissionsDto, loggedInUser: any): Promise<{
         uid: string;
         email: string;
@@ -82,5 +104,42 @@ export declare class AuthService {
     }>;
     deleteUser(uid: string, loggedInUser: any): Promise<{
         message: string;
+    }>;
+    getShopsList(loggedInUser: any, query?: any): Promise<{
+        data: {
+            id: string;
+            shopId: string;
+            name: string;
+            email: string;
+            role: string;
+            subscriptionTier: string;
+            subscriptionExpiresAt: Date;
+            managerCount: number;
+            createdAt: any;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            hasNextPage: boolean;
+            hasPrevPage: boolean;
+        };
+    }>;
+    getShopById(id: string, loggedInUser: any): Promise<{
+        id: string;
+        shopId: string;
+        name: string;
+        email: string;
+        role: string;
+        subscriptionTier: string;
+        subscriptionExpiresAt: Date;
+        managers: {
+            uid: string;
+            name: string;
+            email: string;
+            permissions: import("./schemas/user.schema").ManagerPermissions;
+        }[];
+        createdAt: any;
     }>;
 }
