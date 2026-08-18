@@ -152,4 +152,30 @@ export class AuthController {
   deleteUser(@Param('id') id: string, @GetUser() user: any) {
     return this.authService.deleteUser(id, user);
   }
+
+  /**
+   * 12. List All Registered Shops Endpoint (SuperAdmin Only)
+   * প্ল্যাটফর্মের সকল নিবন্ধিত শপের পেজিনেটেড তালিকা পাওয়া।
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @Get('admin/shops')
+  @ApiOperation({ summary: 'List all registered shop accounts (SuperAdmin only) (Paginated)' })
+  getShopsList(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.authService.getShopsList(user, query);
+  }
+
+  /**
+   * 13. Get Single Shop Details Endpoint (SuperAdmin Only)
+   * শপের বিস্তারিত তথ্য ও ম্যানেজার তালিকা পাওয়া।
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @Get('admin/shops/:id')
+  @ApiOperation({ summary: 'Get shop details by ID (SuperAdmin only)' })
+  getShopById(@Param('id') id: string, @GetUser() user: any) {
+    return this.authService.getShopById(id, user);
+  }
 }

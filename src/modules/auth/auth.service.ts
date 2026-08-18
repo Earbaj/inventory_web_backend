@@ -388,4 +388,108 @@ export class AuthService {
     await this.userModel.findByIdAndDelete(uid);
     return { message: 'User deleted successfully' };
   }
+
+  /**
+   * 11. List All Registered Shops (SuperAdmin Only) (Paginated)
+   * প্ল্যাটফর্মের সকল নিবন্ধিত শপ ও দোকানের অনার একাউন্ট দেখা।
+   */
+  async getShopsList(loggedInUser: any, query: any = {}) {
+    if (loggedInUser.role !== 'superadmin') {
+      throw new ForbiddenException('Only SuperAdmin can view registered shops list');
+    }
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = { role: 'admin' };
+    if (query.subscriptionTier) {
+      filter.subscriptionTier = query.subscriptionTier;
+    }
+    if (query.search) {
+      filter.$or = [
+        { name: { $regex: query.search, $options: 'i' } },
+        { email: { $regex: query.search, $options: 'i' } },
+        { shopId: { $regex: query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const total = await this.userModel.countDocuments(filter);
+    const shopOwners = await this.userModel
+      .find(filter)
+      .select('-passwordHash')
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const data = await Promise.all(
+      shopOwners.map(async owner => {
+        const sId = owner.shopId || owner._id.toString();
+        const managerCount = await this.userModel.countDocuments({ role: 'manager', shopId: sId });
+        return {
+          id: owner._id.toString(),
+          shopId: sId,
+          name: owner.name,
+          email: owner.email,
+          role: owner.role,
+          subscriptionTier: owner.subscriptionTier || 'free',
+          subscriptionExpiresAt: owner.subscriptionExpiresAt || null,
+          managerCount,
+          createdAt: (owner as any).createdAt || new Date(),
+        };
+      })
+    );
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  /**
+   * 12. Get Single Shop Details By ID (SuperAdmin Only)
+   */
+  async getShopById(id: string, loggedInUser: any) {
+    if (loggedInUser.role !== 'superadmin') {
+      throw new ForbiddenException('Only SuperAdmin can view shop details');
+    }
+
+    const owner = await this.userModel.findOne({ _id: id, role: 'admin' }).select('-passwordHash');
+    if (!owner) {
+      throw new NotFoundException('Shop record not found');
+    }
+
+    const sId = owner.shopId || owner._id.toString();
+    const managers = await this.userModel.find({ role: 'manager', shopId: sId }).select('-passwordHash');
+
+    return {
+      id: owner._id.toString(),
+      shopId: sId,
+      name: owner.name,
+      email: owner.email,
+      role: owner.role,
+      subscriptionTier: owner.subscriptionTier || 'free',
+      subscriptionExpiresAt: owner.subscriptionExpiresAt || null,
+      managers: managers.map(m => ({
+        uid: m._id.toString(),
+        name: m.name,
+        email: m.email,
+        permissions: m.permissions,
+      })),
+      createdAt: (owner as any).createdAt || new Date(),
+    };
+  }
 }
