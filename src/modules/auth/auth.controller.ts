@@ -83,20 +83,42 @@ export class AuthController {
   }
 
   /**
-   * 7. List Shop Users (Admin / SuperAdmin Only)
+   * 7. List Shop Users (Admin, Manager, SuperAdmin)
    * নিজের শপের ইউজারদের পেজিনেটেড তালিকা দেখা (সুপার অ্যাডমিনদের জন্য সকল শপের তালিকা)।
    */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'superadmin')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get('users')
-  @ApiOperation({ summary: 'List all shop users (Admin/SuperAdmin only) (Paginated)' })
+  @ApiOperation({ summary: 'List all shop users (Paginated)' })
   getAllUsers(@GetUser() user: any, @Query() query: PaginationQueryDto) {
     return this.authService.getAllUsers(user, query);
   }
 
   /**
-   * 8. Create Manager Account (Shop Admin Only)
+   * 7b. List Staff Members Endpoint (GET /api/staff)
+   * ম্যানেজার এবং শপ অ্যাডমিনদের নিজ শপের স্ট্যাফদের পেজিনেটেড তালিকা দেখা।
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('staff')
+  @ApiOperation({ summary: 'List all staff members for current shop (Paginated)' })
+  getStaffMembers(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.authService.getAllUsers(user, query);
+  }
+
+  /**
+   * 7c. Get Staff Member Details By ID Endpoint (GET /api/staff/:id)
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('staff/:id')
+  @ApiOperation({ summary: 'Get staff member details by ID' })
+  getStaffById(@Param('id') id: string, @GetUser() user: any) {
+    return this.authService.getUserById(id, user);
+  }
+
+  /**
+   * 8. Create Manager / Staff Account (Shop Admin Only)
    * শপের জন্য ম্যানেজার তৈরি করা (ফ্রি টিয়ার শপে সর্বোচ্চ ১ জন ম্যানেজার তৈরির অনুমতি রয়েছে)।
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -105,6 +127,15 @@ export class AuthController {
   @Post('users')
   @ApiOperation({ summary: 'Create a new manager account (Shop Admin only - Max 1 for Free Tier)' })
   createUser(@Body() createUserDto: CreateUserDto, @GetUser() user: any) {
+    return this.authService.createUser(createUserDto, user);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @ApiBearerAuth()
+  @Post('staff')
+  @ApiOperation({ summary: 'Create a new staff member account (Alias for POST /api/users)' })
+  createStaff(@Body() createUserDto: CreateUserDto, @GetUser() user: any) {
     return this.authService.createUser(createUserDto, user);
   }
 
@@ -118,6 +149,19 @@ export class AuthController {
   @Patch('users/:id/permissions')
   @ApiOperation({ summary: 'Update manager permissions (Admin only)' })
   updateUserPermissions(
+    @Param('id') id: string,
+    @Body() updatePermissionsDto: UpdatePermissionsDto,
+    @GetUser() user: any,
+  ) {
+    return this.authService.updateUserPermissions(id, updatePermissionsDto.permissions, user);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @ApiBearerAuth()
+  @Patch('staff/:id/permissions')
+  @ApiOperation({ summary: 'Update staff permissions (Alias for PATCH /api/users/:id/permissions)' })
+  updateStaffPermissions(
     @Param('id') id: string,
     @Body() updatePermissionsDto: UpdatePermissionsDto,
     @GetUser() user: any,
@@ -141,8 +185,8 @@ export class AuthController {
   }
 
   /**
-   * 11. Delete User Account Endpoint
-   * ইউজার অ্যাকাউন্ট মুছে ফেলার এন্ডপয়েন্ট।
+   * 11. Delete User / Staff Account Endpoint
+   * ইউজার বা স্ট্যাফ অ্যাকাউন্ট মুছে ফেলার এন্ডপয়েন্ট।
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'superadmin')
@@ -150,6 +194,15 @@ export class AuthController {
   @Delete('users/:id')
   @ApiOperation({ summary: 'Delete user account (Admin only)' })
   deleteUser(@Param('id') id: string, @GetUser() user: any) {
+    return this.authService.deleteUser(id, user);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @ApiBearerAuth()
+  @Delete('staff/:id')
+  @ApiOperation({ summary: 'Delete staff account (Alias for DELETE /api/users/:id)' })
+  deleteStaff(@Param('id') id: string, @GetUser() user: any) {
     return this.authService.deleteUser(id, user);
   }
 

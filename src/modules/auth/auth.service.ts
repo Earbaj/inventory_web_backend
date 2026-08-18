@@ -308,6 +308,7 @@ export class AuthService {
 
     return {
       data: users.map(user => ({
+        id: user._id.toString(),
         uid: user._id.toString(),
         email: user.email,
         name: user.name,
@@ -325,6 +326,32 @@ export class AuthService {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       },
+    };
+  }
+
+  /**
+   * 7b. Get Single User / Staff Member Details By ID
+   */
+  async getUserById(uid: string, loggedInUser: any) {
+    const user = await this.userModel.findById(uid).select('-passwordHash');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (loggedInUser.role !== 'superadmin' && user.shopId !== loggedInUser.shopId) {
+      throw new ForbiddenException('Cannot access user from another shop');
+    }
+
+    return {
+      id: user._id.toString(),
+      uid: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      shopId: user.shopId,
+      subscriptionTier: user.subscriptionTier,
+      subscriptionExpiresAt: user.subscriptionExpiresAt,
+      permissions: user.permissions,
     };
   }
 
