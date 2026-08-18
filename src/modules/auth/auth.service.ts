@@ -272,25 +272,60 @@ export class AuthService {
   }
 
   /**
-   * 7. Get All Users (Scoped to current shop for Admins, system-wide for SuperAdmin)
+   * 7. Get All Users (Scoped to current shop for Admins, system-wide for SuperAdmin) (Paginated)
    */
-  async getAllUsers(loggedInUser: any) {
-    const query: any = {};
+  async getAllUsers(loggedInUser: any, query: any = {}) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
     if (loggedInUser.role !== 'superadmin') {
-      query.shopId = loggedInUser.shopId;
+      filter.shopId = loggedInUser.shopId;
     }
 
-    const users = await this.userModel.find(query).select('-passwordHash').exec();
-    return users.map(user => ({
-      uid: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      shopId: user.shopId,
-      subscriptionTier: user.subscriptionTier,
-      subscriptionExpiresAt: user.subscriptionExpiresAt,
-      permissions: user.permissions,
-    }));
+    if (query.search) {
+      filter.$or = [
+        { name: { $regex: query.search, $options: 'i' } },
+        { email: { $regex: query.search, $options: 'i' } },
+        { role: { $regex: query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const total = await this.userModel.countDocuments(filter);
+    const users = await this.userModel
+      .find(filter)
+      .select('-passwordHash')
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: users.map(user => ({
+        uid: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        shopId: user.shopId,
+        subscriptionTier: user.subscriptionTier,
+        subscriptionExpiresAt: user.subscriptionExpiresAt,
+        permissions: user.permissions,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   /**

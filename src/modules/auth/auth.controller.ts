@@ -1,7 +1,8 @@
-import { Controller, Post, Body, Get, UseGuards, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, UseGuards, Param, Patch, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, CreateUserDto, UpdatePermissionsDto, ChangePasswordDto, SetupSuperAdminDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -83,15 +84,15 @@ export class AuthController {
 
   /**
    * 7. List Shop Users (Admin / SuperAdmin Only)
-   * নিজের শপের ইউজারদের তালিকা দেখা (সুপার অ্যাডমিনদের জন্য সকল শপের তালিকা)।
+   * নিজের শপের ইউজারদের পেজিনেটেড তালিকা দেখা (সুপার অ্যাডমিনদের জন্য সকল শপের তালিকা)।
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'superadmin')
   @ApiBearerAuth()
   @Get('users')
-  @ApiOperation({ summary: 'List all shop users (Admin/SuperAdmin only)' })
-  getAllUsers(@GetUser() user: any) {
-    return this.authService.getAllUsers(user);
+  @ApiOperation({ summary: 'List all shop users (Admin/SuperAdmin only) (Paginated)' })
+  getAllUsers(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.authService.getAllUsers(user, query);
   }
 
   /**
