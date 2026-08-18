@@ -6,6 +6,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
 
+import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
@@ -47,6 +48,7 @@ import { SeedModule } from './modules/seed/seed.module';
     TrashModule,
     SeedModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
@@ -55,3 +57,4 @@ import { SeedModule } from './modules/seed/seed.module';
   ],
 })
 export class AppModule {}
+
