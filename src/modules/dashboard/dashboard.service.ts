@@ -88,16 +88,24 @@ export class DashboardService {
 
   /**
    * 2. Get Filtered Sales Report
-   * তারিখ অনুযায়ী (Date Range Filter) এবং ক্যাশিয়ার আইডি দিয়ে ফিল্টারকৃত বিস্তারিত বিক্রয় রিপোর্ট।
+   * তারিখ অনুযায়ী (Date Range Filter), ক্যাশিয়ার আইডি এবং পেজিনেশন দিয়ে ফিল্টারকৃত বিস্তারিত বিক্রয় রিপোর্ট।
    */
-  async getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string) {
+  async getSalesReport(user: any, startDate?: string, endDate?: string, cashierId?: string, pageParam: number = 1, limitParam: number = 10) {
+    const page = Math.max(1, Number(pageParam) || 1);
+    const limit = Math.max(1, Math.min(100, Number(limitParam) || 10));
+    const skip = (page - 1) * limit;
+
     const query: any = { shopId: user.shopId, isDeleted: { $ne: true } };
     if (cashierId) query.createdBy = cashierId;
 
     if (startDate || endDate) {
       query.date = {};
       if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.date.$lte = end;
+      }
     }
 
     const sales = await this.saleModel.find(query).sort({ date: -1 }).exec();
@@ -121,26 +129,40 @@ export class DashboardService {
       }
     }
 
+    const totalInvoices = sales.length;
+    const paginatedSales = sales.slice(skip, skip + limit);
+    const totalPages = Math.ceil(totalInvoices / limit) || 1;
+
     return {
       totalRevenue: totalRevenue.toString(),
       totalDiscount: totalDiscount.toString(),
-      totalInvoices: sales.length,
+      totalInvoices,
       totalItemsSold,
       // সর্বোচ্চ বিক্রীত সেরা ১০টি প্রোডাক্ট (Top 10 Selling Products)
       topSellingItems: Array.from(itemsSummary.values())
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10)
         .map(i => ({ ...i, revenue: i.revenue.toString() })),
-      salesList: sales.map(s => ({
-        id: s._id.toString(),
-        invoiceNumber: s.invoiceNumber,
-        customerName: s.customerName,
-        grandTotal: s.grandTotal.toString(),
-        paidAmount: s.paidAmount.toString(),
-        paymentStatus: s.paymentStatus,
-        date: s.date,
-        createdByName: s.createdByName,
-      })),
+      salesList: {
+        data: paginatedSales.map(s => ({
+          id: s._id.toString(),
+          invoiceNumber: s.invoiceNumber,
+          customerName: s.customerName,
+          grandTotal: s.grandTotal.toString(),
+          paidAmount: s.paidAmount.toString(),
+          paymentStatus: s.paymentStatus,
+          date: s.date,
+          createdByName: s.createdByName,
+        })),
+        meta: {
+          total: totalInvoices,
+          page,
+          limit,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      },
     };
   }
 

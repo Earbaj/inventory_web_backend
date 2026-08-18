@@ -37,19 +37,23 @@ export class DashboardController {
 
   /**
    * 3. Get Filtered Sales Report Endpoint
-   * তারিখ ফিল্টার ও ক্যাশিয়ার আইডি দিয়ে ফিল্টারকৃত বিস্তারিত বিক্রয় রিপোর্ট পাওয়ার রাউট।
+   * তারিখ ফিল্টার, ক্যাশিয়ার আইডি এবং পেজিনেশন দিয়ে ফিল্টারকৃত বিস্তারিত বিক্রয় রিপোর্ট পাওয়ার রাউট।
    */
   @Get('reports/sales')
-  @ApiOperation({ summary: 'Get aggregated sales report filtered by date range and cashier' })
+  @ApiOperation({ summary: 'Get aggregated sales report filtered by date range, cashier, and pagination' })
   @ApiQuery({ name: 'startDate', required: false })
   @ApiQuery({ name: 'endDate', required: false })
   @ApiQuery({ name: 'cashierId', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
   getSalesReport(
     @GetUser() user: any,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('cashierId') cashierId?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return this.dashboardService.getSalesReport(user, startDate, endDate, cashierId);
+    return this.dashboardService.getSalesReport(user, startDate, endDate, cashierId, page, limit);
   }
 }
