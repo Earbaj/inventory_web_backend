@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Put, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
-import { CreateItemDto, UpdateItemDto, UpdateStockDto, CreateCategoryDto } from './dto/inventory.dto';
+import { CreateItemDto, UpdateItemDto, UpdateStockDto, CreateCategoryDto, QueryItemDto } from './dto/inventory.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -18,7 +19,7 @@ export class InventoryController {
 
   /**
    * 1. Create Product Item Endpoint
-   * ইনভেন্টরিতে নতুন প্রোডাক্ট এন্ট্রি করা (ফ্রি টিয়ারে সর্বোচ্চ ৫টি পণ্য যোগ করা যাবে)।
+   * ইনভেন্টরিতে নতুন পণ্য যোগ করা (ফ্রি টিয়ারে সর্বোচ্চ ৫টি পণ্য যোগ করা যাবে)।
    */
   @Post('items')
   @ApiOperation({ summary: 'Create new product item (Max 5 for Free Tier)' })
@@ -28,23 +29,22 @@ export class InventoryController {
 
   /**
    * 2. List All Inventory Product Items Endpoint
-   * শপের সকল একটিভ পণ্যের তালিকা দেখা (ঐচ্ছিক ক্যাটাগরি ফিল্টারসহ)।
+   * শপের সকল একটিভ পণ্যের পেজিনেটেড তালিকা দেখা (ঐচ্ছিক ক্যাটাগরি ও সার্চ ফিল্টারসহ)।
    */
   @Get('items')
-  @ApiOperation({ summary: 'List all inventory product items' })
-  @ApiQuery({ name: 'category', required: false })
-  findAllItems(@GetUser() user: any, @Query('category') category?: string) {
-    return this.inventoryService.findAllItems(user, category);
+  @ApiOperation({ summary: 'List all inventory product items (Paginated)' })
+  findAllItems(@GetUser() user: any, @Query() query: QueryItemDto) {
+    return this.inventoryService.findAllItems(user, query);
   }
 
   /**
    * 3. Get Low Stock Warning Items Endpoint
-   * যেসব পণ্যের মজুদ নির্দিষ্ট থ্রেশহোল্ডের নিচে নেমে গেছে সেগুলোর সতর্কবার্তা তালিকা।
+   * যেসব পণ্যের মজুদ নির্দিষ্ট থ্রেশহোল্ডের নিচে নেমে গেছে সেগুলোর পেজিনেটেড তালিকা।
    */
   @Get('items/low-stock')
-  @ApiOperation({ summary: 'Get items with low stock warning (stockQuantity <= lowStockThreshold)' })
-  findLowStockItems(@GetUser() user: any) {
-    return this.inventoryService.findLowStockItems(user);
+  @ApiOperation({ summary: 'Get items with low stock warning (stockQuantity <= lowStockThreshold) (Paginated)' })
+  findLowStockItems(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.inventoryService.findLowStockItems(user, query);
   }
 
   /**
@@ -97,9 +97,9 @@ export class InventoryController {
    * 8. List All Categories Endpoint
    */
   @Get('categories')
-  @ApiOperation({ summary: 'List all product categories' })
-  findAllCategories(@GetUser() user: any) {
-    return this.inventoryService.findAllCategories(user);
+  @ApiOperation({ summary: 'List all product categories (Paginated)' })
+  findAllCategories(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.inventoryService.findAllCategories(user, query);
   }
 
   /**

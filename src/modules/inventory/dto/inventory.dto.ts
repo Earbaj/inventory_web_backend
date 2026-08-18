@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsNumber, Min } from 'class-validator';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 /**
  * Create Inventory Item DTO
@@ -121,3 +122,15 @@ export class CreateCategoryDto {
   @IsOptional()
   description?: string;
 }
+
+/**
+ * Query Inventory Items DTO
+ * ইনভেন্টরি পণ্য ফিল্টারিং ও পেজিনেশনের ডিটিও।
+ */
+export class QueryItemDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ example: 'Electronics', description: 'পণ্যের ক্যাটাগরি ফিল্টার' })
+  @IsString()
+  @IsOptional()
+  category?: string;
+}
+
