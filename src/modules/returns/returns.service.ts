@@ -173,24 +173,58 @@ export class ReturnsService {
   }
 
   /**
-   * 2. List All Return History Records
+   * 2. List All Return History Records (Paginated)
    */
-  async findAllReturns(user: any) {
-    const returns = await this.returnModel.find({ shopId: user.shopId, isDeleted: { $ne: true } }).sort({ createdAt: -1 }).exec();
-    return returns.map(r => ({
-      id: r._id.toString(),
-      customerId: r.customerId,
-      saleId: r.saleId,
-      invoiceNumber: r.invoiceNumber,
-      returnedItems: r.returnedItems.map(item => ({
-        itemId: item.itemId,
-        name: item.name,
-        quantity: item.quantity,
-        refundAmountPerUnit: item.refundAmountPerUnit.toString(),
+  async findAllReturns(user: any, query: any = {}) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = { shopId: user.shopId, isDeleted: { $ne: true } };
+    if (query.search) {
+      filter.$or = [
+        { invoiceNumber: { $regex: query.search, $options: 'i' } },
+        { customerId: { $regex: query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const total = await this.returnModel.countDocuments(filter);
+    const returns = await this.returnModel
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data: returns.map(r => ({
+        id: r._id.toString(),
+        customerId: r.customerId,
+        saleId: r.saleId,
+        invoiceNumber: r.invoiceNumber,
+        returnedItems: r.returnedItems.map(item => ({
+          itemId: item.itemId,
+          name: item.name,
+          quantity: item.quantity,
+          refundAmountPerUnit: item.refundAmountPerUnit.toString(),
+        })),
+        totalRefund: r.totalRefund.toString(),
+        date: r.date,
+        processedBy: r.processedBy,
       })),
-      totalRefund: r.totalRefund.toString(),
-      date: r.date,
-      processedBy: r.processedBy,
-    }));
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 }
