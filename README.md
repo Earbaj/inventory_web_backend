@@ -252,6 +252,16 @@ npm run start:prod
 
 ---
 
+### 13. 🤖 Gemini Flash AI Predictions & Intelligence
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/ai/predict-demand` | AI-driven product demand forecasting and slow-moving risk prediction | Authenticated |
+| `GET` | `/api/ai/customer-credit-score/:customerId` | AI customer reliability rating (1-100 score, credit risk level & max due limit) | Authenticated |
+| `GET` | `/api/ai/business-advisor` | AI small business growth advisor, health grade & actionable profit tips | Authenticated |
+
+---
+
 ## 💻 Tech Stack & Dependencies
 
 - **Framework**: NestJS (v10)

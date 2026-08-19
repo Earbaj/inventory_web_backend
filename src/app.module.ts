@@ -19,6 +19,7 @@ import { TrashModule } from './modules/trash/trash.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ExportModule } from './modules/export/export.module';
+import { AiPredictionsModule } from './modules/ai-predictions/ai-predictions.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ExportModule } from './modules/export/export.module';
     SeedModule,
     AuditLogsModule,
     ExportModule,
+    AiPredictionsModule,
   ],
   controllers: [AppController],
   providers: [
