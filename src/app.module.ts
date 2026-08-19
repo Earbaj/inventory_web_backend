@@ -20,6 +20,7 @@ import { SeedModule } from './modules/seed/seed.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ExportModule } from './modules/export/export.module';
 import { AiPredictionsModule } from './modules/ai-predictions/ai-predictions.module';
+import { ExpensesModule } from './modules/expenses/expenses.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { AiPredictionsModule } from './modules/ai-predictions/ai-predictions.mod
     AuditLogsModule,
     ExportModule,
     AiPredictionsModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [
