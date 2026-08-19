@@ -260,6 +260,69 @@ npm run start:prod
 | `GET` | `/api/ai/customer-credit-score/:customerId` | AI customer reliability rating (1-100 score, credit risk level & max due limit) | Authenticated |
 | `GET` | `/api/ai/business-advisor` | AI small business growth advisor, health grade & actionable profit tips | Authenticated |
 
+#### 📤 Sample AI Response Payloads
+
+- **`GET /api/ai/predict-demand`**
+  ```json
+  {
+    "isAiPowered": true,
+    "modelUsed": "gemini-2.5-flash",
+    "forecast": {
+      "topTrendingProducts": [
+        {
+          "name": "Wireless Mouse",
+          "reason": "High sales volume in the past 30 days and fast inventory turnover",
+          "forecastedDemand": "HIGH"
+        }
+      ],
+      "slowMovingRiskProducts": [
+        {
+          "name": "USB Keyboard Old Model",
+          "reason": "Zero units sold in the last 30 days despite high stock count (20 pcs)",
+          "riskLevel": "HIGH"
+        }
+      ],
+      "aiReorderAdvice": "Reorder 30 pcs of Wireless Mouse before next week to avoid stockout. Consider running a 10% discount on USB Keyboard Old Model to clear dead stock."
+    }
+  }
+  ```
+
+- **`GET /api/ai/customer-credit-score/:customerId`**
+  ```json
+  {
+    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
+    "customerName": "Rahim Traders",
+    "isAiPowered": true,
+    "modelUsed": "gemini-2.5-flash",
+    "assessment": {
+      "reliabilityScore": 88,
+      "creditRiskLevel": "LOW_RISK",
+      "maxRecommendedDueLimit": 8000,
+      "aiSummary": "Rahim Traders clears outstanding due balances within 14 days on average. Consistent payment history with minimal overdue risk."
+    }
+  }
+  ```
+
+- **`GET /api/ai/business-advisor`**
+  ```json
+  {
+    "isAiPowered": true,
+    "modelUsed": "gemini-2.5-flash",
+    "advice": {
+      "healthGrade": "A",
+      "growthOpportunities": [
+        "Collect 3,500 BDT in outstanding due balances using WhatsApp direct payment reminders to optimize cash flow.",
+        "Expand stock for Electronics category which generates 65% of your shop net profit.",
+        "Consider upgrading to Premium yearly subscription to unlock unlimited manager accounts and customer profiles."
+      ],
+      "actionableTips": [
+        "Send WhatsApp payment reminders to top 3 customers with due balances over 1,000 BDT this week.",
+        "Review smart reorder recommendations every Monday morning."
+      ]
+    }
+  }
+  ```
+
 ---
 
 ## 💻 Tech Stack & Dependencies
