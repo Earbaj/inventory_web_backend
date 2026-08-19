@@ -1,7 +1,7 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { ProcessPaymentDto } from './dto/payment.dto';
+import { ProcessPaymentDto, QueryPaymentsDto } from './dto/payment.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 
@@ -24,5 +24,15 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Process customer payment against outstanding due balance' })
   processPayment(@Body() processPaymentDto: ProcessPaymentDto, @GetUser() user: any) {
     return this.paymentsService.processPayment(processPaymentDto, user);
+  }
+
+  /**
+   * 2. List Customer Payments History Endpoint
+   * শপের বাকি আদায় জমার পেজিনেটেড ও তারিখ-ভিত্তিক ইতিহাস তালিকা পাওয়া।
+   */
+  @Get()
+  @ApiOperation({ summary: 'List customer payment collection history (Paginated & Date Filtered)' })
+  findAllPayments(@GetUser() user: any, @Query() query: QueryPaymentsDto) {
+    return this.paymentsService.findAllPayments(user, query);
   }
 }

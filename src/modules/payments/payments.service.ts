@@ -84,4 +84,75 @@ export class PaymentsService {
       newBalance: newBalance.toString(),
     };
   }
+
+  /**
+   * 2. List Customer Payments History (Paginated & Date Filtered)
+   * শপের বাকি আদায় লেনদেনের সময়ভিত্তিক ইতিহাস তালিকা পাওয়া।
+   */
+  async findAllPayments(user: any, query: any = {}) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter: any = { shopId: user.shopId, isDeleted: { $ne: true } };
+    if (query.customerId) {
+      filter.customerId = query.customerId;
+    }
+    if (query.paymentMethod) {
+      filter.paymentMethod = query.paymentMethod.toLowerCase();
+    }
+    if (query.startDate || query.endDate) {
+      filter.date = {};
+      if (query.startDate) filter.date.$gte = new Date(query.startDate);
+      if (query.endDate) {
+        const end = new Date(query.endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.date.$lte = end;
+      }
+    }
+
+    const sortField = query.sortBy || 'date';
+    const sortDirection = query.sortOrder === 'asc' ? 1 : -1;
+
+    const total = await this.paymentModel.countDocuments(filter);
+    const payments = await this.paymentModel
+      .find(filter)
+      .sort({ [sortField]: sortDirection })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const data = await Promise.all(
+      payments.map(async p => {
+        let customerName = 'Unknown Customer';
+        if (p.customerId) {
+          const cust = await this.customerModel.findById(p.customerId).select('name');
+          if (cust) customerName = cust.name;
+        }
+        return {
+          id: p._id.toString(),
+          customerId: p.customerId,
+          customerName,
+          amount: p.amount.toString(),
+          paymentMethod: p.paymentMethod,
+          date: p.date,
+          receivedBy: p.receivedBy,
+        };
+      })
+    );
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
 }
