@@ -48,6 +48,16 @@ export class InventoryController {
   }
 
   /**
+   * 3b. Get Smart Reorder & Dead-Stock Insights Endpoint
+   * সিস্টেমের অটোলজিক অনুযায়ী কম স্টকের জন্য Reorder Suggestion এবং ৩০ দিন যাবত অচল পণ্যের Alert পাওয়া।
+   */
+  @Get('items/insights')
+  @ApiOperation({ summary: 'Get smart reorder quantity suggestions and 30-day dead stock insights' })
+  getInventoryInsights(@GetUser() user: any) {
+    return this.inventoryService.getInventoryInsights(user);
+  }
+
+  /**
    * 4. Get Single Item Details Endpoint
    */
   @Get('items/:id')

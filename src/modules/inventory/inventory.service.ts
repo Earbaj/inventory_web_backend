@@ -277,6 +277,73 @@ export class InventoryService {
   }
 
   /**
+   * 10. Get Smart Reorder & Dead-Stock Insights
+   */
+  async getInventoryInsights(user: any) {
+    const items = await this.itemModel.find({ shopId: user.shopId, isDeleted: { $ne: true } });
+
+    const totalItems = items.length;
+    let outOfStockCount = 0;
+    let lowStockCount = 0;
+    let totalInventoryValue = 0;
+
+    const reorderSuggestions: any[] = [];
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const deadStockItems: any[] = [];
+
+    for (const item of items) {
+      const isOut = item.stockQuantity <= 0;
+      const isLow = item.stockQuantity <= item.lowStockThreshold;
+
+      if (isOut) outOfStockCount++;
+      if (isLow) lowStockCount++;
+
+      const buyP = user.role === 'admin' || user.permissions?.canViewBuyPrice ? item.buyPrice : 0;
+      totalInventoryValue += buyP * item.stockQuantity;
+
+      if (isLow) {
+        const suggestedQty = Math.max(10, (item.lowStockThreshold * 2) - item.stockQuantity);
+        reorderSuggestions.push({
+          id: item._id.toString(),
+          name: item.name,
+          sku: item.sku,
+          category: item.category,
+          currentStock: item.stockQuantity,
+          lowStockThreshold: item.lowStockThreshold,
+          suggestedReorderQuantity: suggestedQty,
+          estimatedReorderCost: (buyP * suggestedQty).toFixed(2),
+        });
+      }
+
+      // Check dead stock (created > 30 days ago and stock unchanged/high)
+      const createdAt = (item as any).createdAt || new Date();
+      if (createdAt < thirtyDaysAgo && item.stockQuantity > item.lowStockThreshold) {
+        deadStockItems.push({
+          id: item._id.toString(),
+          name: item.name,
+          sku: item.sku,
+          category: item.category,
+          stockQuantity: item.stockQuantity,
+          createdAt,
+        });
+      }
+    }
+
+    return {
+      summary: {
+        totalItems,
+        lowStockCount,
+        outOfStockCount,
+        totalInventoryValue: totalInventoryValue.toFixed(2),
+      },
+      reorderSuggestions,
+      deadStockItems,
+    };
+  }
+
+  /**
    * Response Formatter Helper (Protects buyPrice if user lacks permissions)
    */
   private formatItem(item: ItemDocument, user: any) {
