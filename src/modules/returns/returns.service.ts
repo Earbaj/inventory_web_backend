@@ -114,6 +114,8 @@ export class ReturnsService {
     sale.isReturned = isReturnedStatus;
     await sale.save();
 
+    const refundMethod = (processReturnDto.refundMethod || 'cash').toLowerCase();
+
     // রিটার্ন ট্রানজেকশন রেকর্ড ডাটাবেজে সংরক্ষণ
     const returnRecord = new this.returnModel({
       customerId: processReturnDto.customerId || sale.customerId,
@@ -121,6 +123,7 @@ export class ReturnsService {
       invoiceNumber: sale.invoiceNumber,
       returnedItems: returnedDetails,
       totalRefund,
+      refundMethod,
       date: new Date(),
       processedBy: user.uid || user.id,
       shopId: user.shopId,
@@ -129,9 +132,9 @@ export class ReturnsService {
 
     const savedReturn = await returnRecord.save();
 
-    // কাস্টমার রেজিস্টার্ড হলে লেজার খাতা ও ক্লোজিং ব্যালেন্স ক্রেডিট করা
+    // শুধুমাত্র 'due_adjust' সিলেক্ট করা হলেই কাস্টমার রেজিস্টার্ড থাকলে তার ব্যালেন্স ও লেজার স্টেটমেন্ট খাতায় 'return' হিসাব যুক্ত হবে
     const customerId = processReturnDto.customerId || sale.customerId;
-    if (customerId && customerId !== 'walk-in') {
+    if (customerId && customerId !== 'walk-in' && refundMethod === 'due_adjust') {
       const customer = await this.customerModel.findOne({ _id: customerId, shopId: user.shopId, isDeleted: { $ne: true } });
       if (customer) {
         const prevBalance = customer.closingBalance;
@@ -145,7 +148,7 @@ export class ReturnsService {
           type: 'return',
           referenceId: savedReturn._id.toString(),
           date: new Date(),
-          description: `Returned items from invoice #${sale.invoiceNumber}`,
+          description: `Returned items from invoice #${sale.invoiceNumber} (Due Adjusted)`,
           amount: totalRefund,
           previousBalance: prevBalance,
           newBalance: newBalance,
@@ -167,6 +170,7 @@ export class ReturnsService {
         refundAmountPerUnit: r.refundAmountPerUnit.toString(),
       })),
       totalRefund: totalRefund.toString(),
+      refundMethod: savedReturn.refundMethod || refundMethod,
       date: savedReturn.date,
       processedBy: savedReturn.processedBy,
     };
@@ -214,6 +218,7 @@ export class ReturnsService {
           refundAmountPerUnit: item.refundAmountPerUnit.toString(),
         })),
         totalRefund: r.totalRefund.toString(),
+        refundMethod: r.refundMethod || 'cash',
         date: r.date,
         processedBy: r.processedBy,
       })),

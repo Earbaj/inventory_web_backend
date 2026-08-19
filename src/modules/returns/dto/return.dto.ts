@@ -38,4 +38,9 @@ export class ProcessReturnDto {
   @ValidateNested({ each: true })
   @Type(() => ReturnItemInputDto)
   returnedItems: ReturnItemInputDto[];
+
+  @ApiPropertyOptional({ example: 'cash', enum: ['cash', 'due_adjust', 'bkash'], description: 'রিফান্ড মেথড (যেমন: cash, due_adjust, bkash / nagad) (ডিফল্ট: cash)' })
+  @IsString()
+  @IsOptional()
+  refundMethod?: string;
 }

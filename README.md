@@ -476,7 +476,8 @@ npm run start:prod
         "itemId": "65c1a2b3c4d5e6f7a8b9c0e2",
         "quantity": 1
       }
-    ]
+    ],
+    "refundMethod": "due_adjust"
   }
   ```
 

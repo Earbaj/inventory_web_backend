@@ -54,6 +54,10 @@ export class Return {
   @Prop({ required: true, default: 0 })
   totalRefund: number;
 
+  // রিফান্ড মেথড ('cash', 'due_adjust', 'bkash', etc.)
+  @Prop({ required: true, default: 'cash' })
+  refundMethod: string;
+
   // পণ্য ফেরতের তারিখ
   @Prop({ required: true, default: Date.now })
   date: Date;
