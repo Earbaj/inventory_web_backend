@@ -1,7 +1,7 @@
-import { Controller, Post, Body, Get, Query, UseGuards, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, Query, UseGuards, Param, Patch, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, CreateUserDto, UpdatePermissionsDto, ChangePasswordDto, SetupSuperAdminDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, CreateUserDto, UpdatePermissionsDto, ChangePasswordDto, SetupSuperAdminDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto } from './dto/auth.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -80,6 +80,17 @@ export class AuthController {
   @ApiOperation({ summary: 'Get profile of current logged in user' })
   getProfile(@GetUser() user: any) {
     return user;
+  }
+
+  /**
+   * 6b. Update User / Shop Profile Details
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Put('auth/profile')
+  @ApiOperation({ summary: 'Update profile details (name, phone, address, logoUrl) of logged in user/shop' })
+  updateProfile(@Body() updateProfileDto: UpdateProfileDto, @GetUser() user: any) {
+    return this.authService.updateProfile(updateProfileDto, user);
   }
 
   /**

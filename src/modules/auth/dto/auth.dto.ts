@@ -176,3 +176,28 @@ export class ResetPasswordDto {
   @MinLength(6)
   newPassword: string;
 }
+
+/**
+ * Update User / Shop Profile DTO
+ */
+export class UpdateProfileDto {
+  @ApiPropertyOptional({ example: 'Rahim General Store', description: 'ইউজারের/দোকানের নাম' })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ example: '01711000000', description: 'ফোন নম্বর' })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'Dhanmondi, Dhaka', description: 'দোকানের ঠিকানা' })
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/logo.png', description: 'দোকানের লোগো URL' })
+  @IsString()
+  @IsOptional()
+  logoUrl?: string;
+}

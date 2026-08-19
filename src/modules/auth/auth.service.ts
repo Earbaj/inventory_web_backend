@@ -519,4 +519,34 @@ export class AuthService {
       createdAt: (owner as any).createdAt || new Date(),
     };
   }
+
+  /**
+   * 13. Update User / Shop Profile Details
+   */
+  async updateProfile(updateProfileDto: UpdateProfileDto, loggedInUser: any) {
+    const userId = loggedInUser.uid || loggedInUser.id || loggedInUser.sub;
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    if (updateProfileDto.name !== undefined) user.name = updateProfileDto.name;
+    if (updateProfileDto.phone !== undefined) user.phone = updateProfileDto.phone;
+    if (updateProfileDto.address !== undefined) user.address = updateProfileDto.address;
+    if (updateProfileDto.logoUrl !== undefined) user.logoUrl = updateProfileDto.logoUrl;
+
+    await user.save();
+
+    return {
+      uid: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      phone: user.phone || '',
+      address: user.address || '',
+      logoUrl: user.logoUrl || '',
+      role: user.role,
+      shopId: user.shopId,
+      subscriptionTier: user.subscriptionTier,
+      subscriptionExpiresAt: user.subscriptionExpiresAt,
+      permissions: user.permissions,
+    };
+  }
 }

@@ -50,6 +50,18 @@ export class User {
   @Prop({ required: true, trim: true })
   name: string;
 
+  // যোগাযোগের ফোন নম্বর
+  @Prop({ type: String, default: '' })
+  phone: string;
+
+  // শপের ঠিকানা
+  @Prop({ type: String, default: '' })
+  address: string;
+
+  // শপ লোগো URL
+  @Prop({ type: String, default: '' })
+  logoUrl: string;
+
   // রোল আর্কিটেকচার: 'superadmin' (প্ল্যাটফর্মের মালিক), 'admin' (শপের মালিক), 'manager' (শপের কর্মী)
   @Prop({ required: true, enum: ['superadmin', 'admin', 'manager'], default: 'admin' })
   role: string;
