@@ -67,6 +67,15 @@ export class InventoryController {
   }
 
   /**
+   * 4b. Generate Product Barcode & Label Representation Endpoint
+   */
+  @Get('items/:id/barcode')
+  @ApiOperation({ summary: 'Generate barcode, QR code link, and printable thermal sticker HTML for product' })
+  getItemBarcode(@Param('id') id: string, @GetUser() user: any) {
+    return this.inventoryService.getItemBarcode(id, user);
+  }
+
+  /**
    * 5. Update Product Details Endpoint
    */
   @Put('items/:id')

@@ -344,6 +344,49 @@ export class InventoryService {
   }
 
   /**
+   * 11. Generate Product Barcode & Label Representation
+   */
+  async getItemBarcode(id: string, user: any) {
+    const item = await this.itemModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
+    if (!item) throw new NotFoundException('Item not found');
+
+    const sku = item.sku;
+    const canViewBuy = user.role === 'admin' || user.permissions?.canViewBuyPrice;
+    const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(sku)}`;
+
+    return {
+      itemId: item._id.toString(),
+      name: item.name,
+      sku: item.sku,
+      category: item.category,
+      sellPrice: item.sellPrice.toString(),
+      buyPrice: canViewBuy ? item.buyPrice.toString() : 'N/A',
+      qrCodeUrl: qrDataUrl,
+      barcodeText: `*${sku}*`,
+      printableHtml: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Barcode ${sku}</title>
+  <style>
+    body { font-family: monospace; width: 50mm; text-align: center; margin: 0 auto; padding: 5px; }
+    .title { font-weight: bold; font-size: 11px; }
+    .price { font-size: 14px; font-weight: bold; margin: 2px 0; }
+    .sku { font-size: 10px; color: #333; }
+    img { width: 80px; height: 80px; margin: 4px 0; }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="title">${item.name}</div>
+  <div class="price">৳${item.sellPrice}</div>
+  <img src="${qrDataUrl}" alt="QR Code"/>
+  <div class="sku">Code: ${sku}</div>
+</body>
+</html>`,
+    };
+  }
+
+  /**
    * Response Formatter Helper (Protects buyPrice if user lacks permissions)
    */
   private formatItem(item: ItemDocument, user: any) {
