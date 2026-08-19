@@ -325,6 +325,22 @@ npm run start:prod
 
 ---
 
+### 14. 💸 Shop Expenses & Operational Overheads
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/expenses` | Create new shop operational expense record (rent, utility, salary, transport) | Authenticated |
+| `GET` | `/api/expenses` | List shop expenses (Paginated, `?category=...`, `?startDate=...`, `?endDate=...`) | Authenticated |
+| `GET` | `/api/expenses/:id` | Get expense record details by ID | Authenticated |
+| `PUT` | `/api/expenses/:id` | Update expense details | Authenticated |
+| `DELETE` | `/api/expenses/:id` | Soft-delete expense record (Moves to Recycle Bin) | Authenticated |
+| `PUT` | `/api/auth/profile` | Update profile details (name, phone, address, logoUrl) | Authenticated |
+| `GET` | `/api/sales/invoice/:invoiceNumber/print` | Get printable 80mm POS thermal receipt HTML | Authenticated |
+| `GET` | `/api/items/:id/barcode` | Generate product barcode, QR code link & sticker HTML | Authenticated |
+| `GET` | `/api/dashboard/alerts` | Get aggregated active shop notifications & alerts | Authenticated |
+
+---
+
 ## 💻 Tech Stack & Dependencies
 
 - **Framework**: NestJS (v10)

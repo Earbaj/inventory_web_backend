@@ -428,37 +428,4 @@ export class DashboardService {
       subscription: subscriptionAlert,
     };
   }
-}lProfit: i.totalProfit.toFixed(2),
-            marginPercent: i.totalRevenue > 0 ? ((i.totalProfit / i.totalRevenue) * 100).toFixed(2) + '%' : '0%',
-          }))
-      : [];
-
-    const topCustomers = Array.from(customerAnalyticsMap.values())
-      .filter(c => c.id !== 'walk-in')
-      .sort((a, b) => b.totalPurchased - a.totalPurchased)
-      .slice(0, 5)
-      .map(c => ({
-        id: c.id,
-        name: c.name,
-        totalPurchased: c.totalPurchased.toFixed(2),
-        invoiceCount: c.invoiceCount,
-        dueBalance: c.dueBalance.toFixed(2),
-      }));
-
-    const netProfit = grandTotalRevenue - grandTotalCost;
-    const profitMarginPercent = grandTotalRevenue > 0 ? ((netProfit / grandTotalRevenue) * 100).toFixed(2) + '%' : '0%';
-
-    return {
-      summary: {
-        totalSalesRevenue: grandTotalRevenue.toFixed(2),
-        totalCost: canViewBuy ? grandTotalCost.toFixed(2) : 'N/A',
-        netProfit: canViewBuy ? netProfit.toFixed(2) : 'N/A',
-        overallProfitMarginPercent: canViewBuy ? profitMarginPercent : 'N/A',
-      },
-      topSellingByQuantity,
-      topSellingByRevenue,
-      mostProfitableItems,
-      topCustomers,
-    };
-  }
 }
