@@ -17,6 +17,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { TrashModule } from './modules/trash/trash.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
+import { ExportModule } from './modules/export/export.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
     TrashModule,
     SeedModule,
     AuditLogsModule,
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [
