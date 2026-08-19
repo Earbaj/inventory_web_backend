@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsNumber, Min, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 /**
  * Return Item Input DTO
@@ -43,4 +44,20 @@ export class ProcessReturnDto {
   @IsString()
   @IsOptional()
   refundMethod?: string;
+}
+
+/**
+ * Query Returns DTO
+ * রিটার্ন ট্রানজেকশন ফিল্টারিং ও পেজিনেশনের ডিটিও।
+ */
+export class QueryReturnsDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ example: '2026-08-01', description: 'শুরুর তারিখ (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-08-19', description: 'শেষের তারিখ (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  endDate?: string;
 }

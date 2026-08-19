@@ -185,6 +185,15 @@ export class ReturnsService {
     const skip = (page - 1) * limit;
 
     const filter: any = { shopId: user.shopId, isDeleted: { $ne: true } };
+    if (query.startDate || query.endDate) {
+      filter.date = {};
+      if (query.startDate) filter.date.$gte = new Date(query.startDate);
+      if (query.endDate) {
+        const end = new Date(query.endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.date.$lte = end;
+      }
+    }
     if (query.search) {
       filter.$or = [
         { invoiceNumber: { $regex: query.search, $options: 'i' } },

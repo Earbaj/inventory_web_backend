@@ -1,8 +1,7 @@
 import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReturnsService } from './returns.service';
-import { ProcessReturnDto } from './dto/return.dto';
-import { PaginationQueryDto } from '../../common/dto/pagination.dto';
+import { ProcessReturnDto, QueryReturnsDto } from './dto/return.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { Permissions } from '../../common/decorators/permissions.decorator';
@@ -36,7 +35,7 @@ export class ReturnsController {
    */
   @Get()
   @ApiOperation({ summary: 'List return transaction history (Paginated)' })
-  findAllReturns(@GetUser() user: any, @Query() query: PaginationQueryDto) {
+  findAllReturns(@GetUser() user: any, @Query() query: QueryReturnsDto) {
     return this.returnsService.findAllReturns(user, query);
   }
 }
