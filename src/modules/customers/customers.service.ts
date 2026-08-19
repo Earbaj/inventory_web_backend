@@ -186,7 +186,16 @@ export class CustomersService {
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
     const skip = (page - 1) * limit;
 
-    const filter = { customerId, shopId: user.shopId, isDeleted: { $ne: true } };
+    const filter: any = { customerId, shopId: user.shopId, isDeleted: { $ne: true } };
+    if (query.startDate || query.endDate) {
+      filter.date = {};
+      if (query.startDate) filter.date.$gte = new Date(query.startDate);
+      if (query.endDate) {
+        const end = new Date(query.endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.date.$lte = end;
+      }
+    }
     const sortField = query.sortBy || 'date';
     const sortDirection = query.sortOrder === 'desc' ? -1 : 1; // Default ascending for ledger
 

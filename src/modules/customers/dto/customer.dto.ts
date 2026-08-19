@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 /**
  * Create Customer DTO
@@ -46,4 +47,20 @@ export class UpdateCustomerDto {
   @IsString()
   @IsOptional()
   address?: string;
+}
+
+/**
+ * Query Ledger DTO
+ * কাস্টমার লেজার স্টেটমেন্ট ট্রানজেকশন ফিল্টারিং ও পেজিনেশনের ডিটিও।
+ */
+export class QueryLedgerDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ example: '2026-08-01', description: 'শুরুর তারিখ (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-08-19', description: 'শেষের তারিখ (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  endDate?: string;
 }

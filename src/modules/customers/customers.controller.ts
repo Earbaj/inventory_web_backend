@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
-import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
+import { CreateCustomerDto, UpdateCustomerDto, QueryLedgerDto } from './dto/customer.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -82,7 +82,7 @@ export class CustomersController {
    */
   @Get(':id/ledger')
   @ApiOperation({ summary: 'Get transaction statement ledger for customer (Paginated)' })
-  getLedger(@Param('id') id: string, @GetUser() user: any, @Query() query: PaginationQueryDto) {
+  getLedger(@Param('id') id: string, @GetUser() user: any, @Query() query: QueryLedgerDto) {
     return this.customersService.getLedger(id, user, query);
   }
 }
