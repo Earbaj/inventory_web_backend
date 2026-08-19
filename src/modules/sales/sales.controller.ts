@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Response } from 'express';
 import { SalesService } from './sales.service';
 import { CreateSaleDto, QuerySalesDto } from './dto/sales.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -47,6 +48,17 @@ export class SalesController {
   @ApiOperation({ summary: 'Get invoice details by invoice number' })
   findByInvoice(@Param('invoiceNumber') invoiceNumber: string, @GetUser() user: any) {
     return this.salesService.findByInvoice(invoiceNumber, user);
+  }
+
+  /**
+   * 3b. Printable POS Thermal Receipt Helper Endpoint (80mm/58mm format)
+   */
+  @Get('invoice/:invoiceNumber/print')
+  @ApiOperation({ summary: 'Get printable thermal receipt HTML document' })
+  async printThermalReceipt(@Param('invoiceNumber') invoiceNumber: string, @GetUser() user: any, @Res() res: Response) {
+    const html = await this.salesService.generateThermalPrintHtml(invoiceNumber, user);
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
   }
 
   /**

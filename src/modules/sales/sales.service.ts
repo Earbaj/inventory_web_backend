@@ -297,6 +297,104 @@ export class SalesService {
   }
 
   /**
+   * 6. Generate POS Thermal Printer Printable HTML Helper (80mm/58mm format)
+   */
+  async generateThermalPrintHtml(invoiceNumber: string, user: any): Promise<string> {
+    const sale = await this.saleModel.findOne({ invoiceNumber, shopId: user.shopId, isDeleted: { $ne: true } });
+    if (!sale) throw new NotFoundException('Invoice not found');
+
+    const formattedDate = new Date(sale.date).toLocaleString('en-GB');
+
+    const itemRows = sale.items
+      .map(
+        i => `
+      <tr>
+        <td style="padding: 4px 0;">${i.name}<br/><small style="color: #666;">${i.quantity} x ৳${i.unitPrice}</small></td>
+        <td style="text-align: right; vertical-align: top; padding: 4px 0;">৳${i.totalPrice}</td>
+      </tr>`,
+      )
+      .join('');
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Receipt ${sale.invoiceNumber}</title>
+  <style>
+    @page { size: 80mm auto; margin: 0; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      width: 78mm;
+      margin: 0 auto;
+      padding: 10px 5px;
+      color: #000;
+      background: #fff;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .bold { font-weight: bold; }
+    .divider { border-top: 1px dashed #000; margin: 8px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    .total-table td { padding: 2px 0; }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="text-center bold" style="font-size: 16px;">KEEPER POS STORE</div>
+  <div class="text-center">Invoice #${sale.invoiceNumber}</div>
+  <div class="text-center" style="font-size: 10px;">Date: ${formattedDate}</div>
+  <div class="divider"></div>
+  <div><strong>Customer:</strong> ${sale.customerName || 'Walk-in Customer'}</div>
+  <div><strong>Phone:</strong> ${sale.customerPhone || 'N/A'}</div>
+  <div><strong>Served By:</strong> ${sale.createdByName || 'Cashier'}</div>
+  <div class="divider"></div>
+  <table>
+    <thead>
+      <tr style="border-bottom: 1px solid #000;">
+        <th style="text-align: left;">Item</th>
+        <th style="text-align: right;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemRows}
+    </tbody>
+  </table>
+  <div class="divider"></div>
+  <table class="total-table">
+    <tr>
+      <td>Subtotal:</td>
+      <td class="text-right">৳${sale.subtotal}</td>
+    </tr>
+    <tr>
+      <td>Discount:</td>
+      <td class="text-right">৳${sale.discount}</td>
+    </tr>
+    <tr class="bold" style="font-size: 14px;">
+      <td>Grand Total:</td>
+      <td class="text-right">৳${sale.grandTotal}</td>
+    </tr>
+    <tr>
+      <td>Paid Amount:</td>
+      <td class="text-right">৳${sale.paidAmount}</td>
+    </tr>
+    <tr class="bold">
+      <td>Due Amount:</td>
+      <td class="text-right">৳${sale.dueAmount}</td>
+    </tr>
+    <tr>
+      <td>Payment Status:</td>
+      <td class="text-right bold" style="text-transform: uppercase;">${sale.paymentStatus}</td>
+    </tr>
+  </table>
+  <div class="divider"></div>
+  <div class="text-center bold">THANK YOU FOR YOUR BUSINESS!</div>
+  <div class="text-center" style="font-size: 10px; margin-top: 4px;">Powered by Keeper POS SaaS</div>
+</body>
+</html>`;
+  }
+
+  /**
    * Response Formatter Helper
    */
   public formatSale(sale: SaleDocument) {
