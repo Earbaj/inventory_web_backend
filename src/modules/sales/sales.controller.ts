@@ -57,4 +57,13 @@ export class SalesController {
   findOneSale(@Param('id') id: string, @GetUser() user: any) {
     return this.salesService.findOneSale(id, user);
   }
+
+  /**
+   * 5. Generate WhatsApp Direct Invoice Receipt Link
+   */
+  @Get(':id/whatsapp-link')
+  @ApiOperation({ summary: 'Generate WhatsApp direct chat link for sales invoice receipt' })
+  generateWhatsAppLink(@Param('id') id: string, @GetUser() user: any) {
+    return this.salesService.generateWhatsAppLink(id, user);
+  }
 }

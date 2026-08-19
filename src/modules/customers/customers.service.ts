@@ -232,6 +232,55 @@ export class CustomersService {
   }
 
   /**
+   * 7. Generate Customer Due Reminder WhatsApp Link
+   */
+  async generateDueReminderWhatsAppLink(id: string, user: any) {
+    const customer = await this.customerModel.findOne({
+      _id: id,
+      shopId: user.shopId,
+      isDeleted: { $ne: true },
+    });
+    if (!customer) throw new NotFoundException('Customer not found');
+
+    let cleanPhone = (customer.phone || '').replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('01')) {
+      cleanPhone = '88' + cleanPhone;
+    }
+
+    const dueAmount = customer.closingBalance < 0 ? Math.abs(customer.closingBalance) : 0;
+
+    let message = '';
+    if (dueAmount > 0) {
+      message = `📢 *Keeper POS - Payment Reminder*\n` +
+        `Dear ${customer.name},\n` +
+        `This is a friendly reminder from our shop.\n` +
+        `Your current outstanding due balance is: *${dueAmount.toFixed(2)} BDT*.\n` +
+        `Please settle the due payment at your earliest convenience.\n\n` +
+        `Thank you for your cooperation!`;
+    } else {
+      message = `😊 *Keeper POS - Thank You*\n` +
+        `Dear ${customer.name},\n` +
+        `Thank you for keeping your account updated with zero outstanding due balance.\n\n` +
+        `We appreciate your business!`;
+    }
+
+    const encodedText = encodeURIComponent(message);
+    const whatsappUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
+      : `https://api.whatsapp.com/send?text=${encodedText}`;
+
+    return {
+      customerId: customer._id.toString(),
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      cleanPhone,
+      dueAmount: dueAmount.toString(),
+      message,
+      whatsappUrl,
+    };
+  }
+
+  /**
    * Response Formatting Helper
    */
   private formatCustomer(customer: CustomerDocument) {

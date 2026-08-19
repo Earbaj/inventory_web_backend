@@ -253,6 +253,50 @@ export class SalesService {
   }
 
   /**
+   * 5. Generate Direct WhatsApp Invoice Link
+   */
+  async generateWhatsAppLink(id: string, user: any) {
+    const sale = await this.saleModel.findOne({ _id: id, shopId: user.shopId, isDeleted: { $ne: true } });
+    if (!sale) throw new NotFoundException('Sale invoice record not found');
+
+    let cleanPhone = (sale.customerPhone || '').replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('01')) {
+      cleanPhone = '88' + cleanPhone;
+    }
+
+    const itemsText = sale.items
+      .map(i => `- ${i.name} (x${i.quantity}) = ${i.totalPrice} BDT`)
+      .join('\n');
+
+    const message = `🧾 *Keeper POS Invoice Receipt*\n` +
+      `Invoice #: ${sale.invoiceNumber}\n` +
+      `Customer: ${sale.customerName || 'Valued Customer'}\n` +
+      `Date: ${new Date(sale.date).toLocaleDateString('en-GB')}\n` +
+      `-------------------------\n` +
+      `Items:\n${itemsText}\n` +
+      `-------------------------\n` +
+      `Subtotal: ${sale.subtotal} BDT\n` +
+      `Discount: ${sale.discount} BDT\n` +
+      `Grand Total: ${sale.grandTotal} BDT\n` +
+      `Paid: ${sale.paidAmount} BDT\n` +
+      `Due: ${sale.dueAmount} BDT (${sale.paymentStatus.toUpperCase()})\n\n` +
+      `Thank you for your business!`;
+
+    const encodedText = encodeURIComponent(message);
+    const whatsappUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
+      : `https://api.whatsapp.com/send?text=${encodedText}`;
+
+    return {
+      invoiceNumber: sale.invoiceNumber,
+      customerPhone: sale.customerPhone,
+      cleanPhone,
+      message,
+      whatsappUrl,
+    };
+  }
+
+  /**
    * Response Formatter Helper
    */
   public formatSale(sale: SaleDocument) {

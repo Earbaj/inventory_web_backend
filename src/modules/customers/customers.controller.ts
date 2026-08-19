@@ -85,4 +85,14 @@ export class CustomersController {
   getLedger(@Param('id') id: string, @GetUser() user: any, @Query() query: QueryLedgerDto) {
     return this.customersService.getLedger(id, user, query);
   }
+
+  /**
+   * 7. Generate WhatsApp Direct Due Reminder Link Endpoint
+   * কাস্টমারের বকেয়া টাকার তাগাদা দেওয়ার সরাসরি হোয়াটসঅ্যাপ মেসেজ লিংক তৈরি।
+   */
+  @Get(':id/due-reminder-link')
+  @ApiOperation({ summary: 'Generate WhatsApp direct chat link for customer due payment reminder' })
+  generateDueReminderWhatsAppLink(@Param('id') id: string, @GetUser() user: any) {
+    return this.customersService.generateDueReminderWhatsAppLink(id, user);
+  }
 }
