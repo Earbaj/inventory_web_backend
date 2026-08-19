@@ -1,10 +1,10 @@
 # ⚡ Keeper POS — Multi-Tenant SaaS Backend (NestJS + MongoDB)
 
-Welcome to the **Keeper POS Backend API Service**! Built with **NestJS**, **TypeScript**, and **MongoDB (Mongoose ODM)**, this enterprise-grade service provides Point of Sale billing, multi-tenancy shop isolation, API rate limiting, manual bKash subscription payments, soft-delete data recovery (Recycle Bin), password recovery OTP flow, staff management, health check diagnostics, module-wide data pagination, and platform management for SuperAdmins.
+Welcome to the **Keeper POS Backend API Service**! Built with **NestJS**, **TypeScript**, and **MongoDB (Mongoose ODM)**, this enterprise-grade service provides Point of Sale billing, multi-tenancy shop isolation, API rate limiting, manual bKash subscription payments, soft-delete data recovery (Recycle Bin), password recovery OTP flow, staff management, health check diagnostics, module-wide data pagination, platform management for SuperAdmins, WhatsApp direct chat link generators, security activity audit logging, smart inventory forecasting, profit & top-seller analytics, and bulk CSV data export.
 
 ---
 
-## 🚀 Key Architectural Features
+## 🚀 Key Architectural & Enterprise Features
 
 1. **🛡️ API Rate Limiting (`@nestjs/throttler`)**:
    - Prevents DoS attacks and API abuse using global rate-limiting guards (20 requests/minute per IP).
@@ -14,51 +14,29 @@ Welcome to the **Keeper POS Backend API Service**! Built with **NestJS**, **Type
    - **`manager`**: Shop Staff (created by Shop Admin, scoped to the creator's `shopId` with granular permissions like `canProcessReturn`, `canExportExcel`, `canEditCustomers`, `canViewBuyPrice`).
 3. **📄 Standardized Pagination & Search System**:
    - Universal `PaginationQueryDto` supporting `page` (default: 1), `limit` (default: 10, max: 100), `search`, `sortBy`, and `sortOrder` (`asc` / `desc`).
-   - Standardized `PaginatedResult<T>` wrapper output structure:
-     ```json
-     {
-       "data": [ ... ],
-       "meta": {
-         "total": 42,
-         "page": 1,
-         "limit": 10,
-         "totalPages": 5,
-         "hasNextPage": true,
-         "hasPrevPage": false
-       }
-     }
-     ```
-4. **🔒 Multi-Tenancy Data Isolation (`shopId`)**:
-   - All items, customers, sales, returns, customer payments, staff accounts, and ledgers are strictly scoped by `shopId`. Users from Shop A cannot view or modify data from Shop B.
-5. **👑 One-Time Initial SuperAdmin Setup (`POST /api/auth/setup-superadmin`)**:
-   - Secure setup endpoint allowing initial creation of the SuperAdmin account ONLY IF zero SuperAdmin accounts exist in MongoDB. Once created, subsequent calls return `403 Forbidden`.
-6. **🔐 Password Recovery OTP System**:
-   - `POST /api/auth/forgot-password`: Generates a 6-digit numeric OTP code valid for 15 minutes, logged in dev console and saved to user schema.
-   - `POST /api/auth/reset-password`: Verifies email, code, and expiry before updating the user password hash.
-7. **🛑 Free Tier Feature Limitations**:
-   - Strictly enforced in service layers when `subscriptionTier === 'free'`:
-     - 👤 **Max 1 Customer** (Creating 2nd customer throws `400 Bad Request`)
-     - 👥 **Max 1 Manager Account** (Creating 2nd manager throws `400 Bad Request`)
-     - 📦 **Max 5 Inventory Items** (Creating 6th item throws `400 Bad Request`)
-     - 🛒 **Max 5 Sales Transactions** (Creating 6th sale throws `400 Bad Request`)
-8. **👥 Staff Management System (`/api/staff`)**:
-   - Full CRUD endpoints (`GET`, `POST`, `PATCH`, `DELETE`) for staff and manager accounts with permissions configuration.
-9. **🏢 SuperAdmin Registered Shops Management (`/api/admin/shops`)**:
-   - Allows SuperAdmin to view, filter, and inspect registered shops and their staff allocations.
-10. **💳 Subscriptions & Manual bKash Payment System**:
-    - **Package Catalog**: Free Starter (0 BDT), Premium Monthly (1,000 BDT / 30 days), Premium Yearly (10,000 BDT / 365 days).
-    - **Manual Payment Flow**: Shop Owners submit payment details (`trxId`, `accountNo`, `packageId`, `paymentMethod: 'manual_bkash'`).
-    - **SuperAdmin Approval**: SuperAdmin reviews pending payments (`PATCH /api/subscriptions/payments/:id/approve`). Extends subscription expiration by 30 or 365 days (adding onto existing active expiry date if valid, or from current timestamp) and upgrades tier to `premium`.
-11. **♻️ Soft Delete & Recycle Bin / Data Recovery System**:
-    - Critical data (Items, Customers, Sales, Returns) is soft-deleted (`isDeleted: true`).
-    - **Recycle Bin List (`GET /api/trash`)**: Displays all soft-deleted records with `entityType` filtering.
-    - **Data Restore (`POST /api/trash/restore/:entityType/:id`)**: Restores deleted items back into active database tables.
-    - **Permanent Hard Delete (`DELETE /api/trash/permanent/:entityType/:id`)**: Permanently purges specific trash records from MongoDB storage.
-12. **🏥 Health Check & System Status (`GET /api/health`)**:
-    - Returns real-time server status, service version, uptime seconds, ISO timestamp, environment, and MongoDB database connection state.
-13. **📊 Dashboards & Analytics**:
-    - **Shop Dashboard (`GET /api/dashboard/stats`)**: Revenue, net profit, low-stock alerts, customer dues, invoice count.
-    - **SuperAdmin Dashboard (`GET /api/dashboard/superadmin`)**: Platform total shops, manager counts, approved subscription revenue, pending payment requests count.
+   - Standardized `PaginatedResult<T>` wrapper output structure.
+4. **📱 WhatsApp Direct Chat Link Generator**:
+   - Generates instant zero-cost WhatsApp API message links for sending formatted sales receipts and customer due payment reminders (`/api/sales/:id/whatsapp-link` and `/api/customers/:id/due-reminder-link`).
+5. **🛡️ Security Audit Logs & Activity Trail**:
+   - Logs security actions (user creation, stock adjustments, permission updates, trash restores) with user ID, role, action, and timestamp (`GET /api/audit-logs`).
+6. **📈 Smart Inventory Reorder & Dead-Stock Insights**:
+   - Automated reorder suggestions based on low stock thresholds and 30-day dead stock detection (`GET /api/items/insights`).
+7. **📊 Profit Margin & Top-Seller Analytics Insights**:
+   - Calculates top-selling products by volume/revenue, most profitable products, profit margins, and top valuable customers (`GET /api/dashboard/insights`).
+8. **📥 Bulk CSV Data Export**:
+   - Allows shop owners to download structured CSV files for inventory, customers, sales, and customer ledger statements (`GET /api/export/*`).
+9. **👑 One-Time Initial SuperAdmin Setup (`POST /api/auth/setup-superadmin`)**:
+   - Allows initial creation of the SuperAdmin account ONLY IF zero SuperAdmin accounts exist in MongoDB.
+10. **🔐 Password Recovery OTP System**:
+    - `POST /api/auth/forgot-password` (6-digit OTP code valid for 15 mins) and `POST /api/auth/reset-password`.
+11. **🛑 Free Tier Feature Limitations**:
+    - Strictly enforced in service layers when `subscriptionTier === 'free'`: Max 1 Customer, Max 1 Manager, Max 5 Inventory Items, Max 5 Sales Transactions.
+12. **💳 Subscriptions & Manual bKash Payment System**:
+    - Manual payment flow with TrxID submission and SuperAdmin approval (`PATCH /api/subscriptions/payments/:id/approve`).
+13. **♻️ Soft Delete & Recycle Bin / Data Recovery System**:
+    - Critical data is soft-deleted (`isDeleted: true`), viewable in Recycle Bin (`GET /api/trash`), restorable (`POST /api/trash/restore/:entityType/:id`), or hard-deletable.
+14. **🏥 Health Check & System Status (`GET /api/health`)**:
+    - Real-time server status, service version, uptime seconds, ISO timestamp, environment, and MongoDB database connection state.
 
 ---
 
@@ -117,13 +95,14 @@ npm run start:prod
 
 ---
 
-## 📖 Complete API Reference Guide & JSON Request Payloads
+## 📖 Complete API Reference Guide
 
-### 0. 🏥 System Health Check
+### 0. 🏥 System Health Check & Security Audit Logs
 
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/health` | Health status, uptime, and DB connection state | Public |
+| `GET` | `/api/audit-logs` | List security audit trail logs (Paginated, `?startDate=...`, `?action=...`) | Admin / SuperAdmin |
 
 ---
 
@@ -143,86 +122,6 @@ npm run start:prod
 | `POST` | `/api/users/change-password` | Change logged-in user password | Authenticated |
 | `DELETE` | `/api/users/:id` | Delete user account | Admin / SuperAdmin |
 
-#### 📥 Request JSON Payloads (Auth & Users)
-
-- **`POST /api/auth/setup-superadmin`**
-  ```json
-  {
-    "name": "Platform Super Admin",
-    "email": "superadmin@keeper.com",
-    "password": "supersecretpassword123"
-  }
-  ```
-
-- **`POST /api/auth/login`**
-  ```json
-  {
-    "email": "admin@shop.com",
-    "password": "adminpassword123"
-  }
-  ```
-
-- **`POST /api/auth/register`**
-  ```json
-  {
-    "name": "Rahim Store Admin",
-    "email": "admin@shop.com",
-    "password": "adminpassword123"
-  }
-  ```
-
-- **`POST /api/auth/forgot-password`**
-  ```json
-  {
-    "email": "admin@shop.com"
-  }
-  ```
-
-- **`POST /api/auth/reset-password`**
-  ```json
-  {
-    "email": "admin@shop.com",
-    "resetCode": "582910",
-    "newPassword": "newsecurepassword123"
-  }
-  ```
-
-- **`POST /api/users`**
-  ```json
-  {
-    "name": "Kamal Staff Manager",
-    "email": "manager@shop.com",
-    "password": "managerpassword123",
-    "role": "manager",
-    "permissions": {
-      "canProcessReturn": true,
-      "canExportExcel": false,
-      "canEditCustomers": true,
-      "canViewBuyPrice": false
-    }
-  }
-  ```
-
-- **`PATCH /api/users/:id/permissions`**
-  ```json
-  {
-    "permissions": {
-      "canProcessReturn": true,
-      "canExportExcel": true,
-      "canEditCustomers": false,
-      "canViewBuyPrice": true
-    }
-  }
-  ```
-
-- **`POST /api/users/change-password`**
-  ```json
-  {
-    "oldPassword": "currentpassword123",
-    "newPassword": "newpassword123"
-  }
-  ```
-
 ---
 
 ### 2. 👥 Staff Management
@@ -234,36 +133,6 @@ npm run start:prod
 | `GET` | `/api/staff/:id` | Get single staff member details by ID | Authenticated |
 | `PATCH` | `/api/staff/:id/permissions` | Update staff member permissions | Admin / SuperAdmin |
 | `DELETE` | `/api/staff/:id` | Delete staff member account | Admin / SuperAdmin |
-
-#### 📥 Request JSON Payloads (Staff)
-
-- **`POST /api/staff`**
-  ```json
-  {
-    "name": "Jamal Cashier",
-    "email": "staff@shop.com",
-    "password": "staffpassword123",
-    "role": "manager",
-    "permissions": {
-      "canProcessReturn": false,
-      "canExportExcel": false,
-      "canEditCustomers": true,
-      "canViewBuyPrice": false
-    }
-  }
-  ```
-
-- **`PATCH /api/staff/:id/permissions`**
-  ```json
-  {
-    "permissions": {
-      "canProcessReturn": true,
-      "canExportExcel": true,
-      "canEditCustomers": true,
-      "canViewBuyPrice": false
-    }
-  }
-  ```
 
 ---
 
@@ -288,26 +157,6 @@ npm run start:prod
 | `PATCH` | `/api/subscriptions/payments/:id/approve` | Approve payment request & extend tier expiry | SuperAdmin Only |
 | `PATCH` | `/api/subscriptions/payments/:id/reject` | Reject payment request with reason | SuperAdmin Only |
 
-#### 📥 Request JSON Payloads (Subscriptions)
-
-- **`POST /api/subscriptions/payments/manual`**
-  ```json
-  {
-    "packageId": "premium_monthly",
-    "amount": 1000,
-    "paymentMethod": "manual_bkash",
-    "trxId": "BK88231920X",
-    "accountNo": "01711223344"
-  }
-  ```
-
-- **`PATCH /api/subscriptions/payments/:id/reject`**
-  ```json
-  {
-    "reason": "Transaction ID does not match merchant account records"
-  }
-  ```
-
 ---
 
 ### 5. 📦 Inventory Catalog (Free Tier Limit: Max 5 Items)
@@ -317,57 +166,13 @@ npm run start:prod
 | `POST` | `/api/items` | Add product item (Max 5 for Free Tier) | Authenticated |
 | `GET` | `/api/items` | List shop products (Paginated, `?category=...`, `?search=...`) | Authenticated |
 | `GET` | `/api/items/low-stock` | Get low stock warning products (Paginated) | Authenticated |
+| `GET` | `/api/items/insights` | Get smart reorder quantity suggestions & dead stock alerts | Authenticated |
 | `GET` | `/api/items/:id` | Get product details by ID | Authenticated |
 | `PUT` | `/api/items/:id` | Update product details | Authenticated |
 | `PATCH` | `/api/items/:id/stock` | Adjust stock quantity (+/- N) | Authenticated |
 | `DELETE` | `/api/items/:id` | Delete product item (Moves to Recycle Bin) | Authenticated |
 | `GET` | `/api/categories` | List product categories (Paginated) | Authenticated |
 | `POST` | `/api/categories` | Create new product category | Authenticated |
-
-#### 📥 Request JSON Payloads (Inventory)
-
-- **`POST /api/items`**
-  ```json
-  {
-    "name": "Wireless Mouse",
-    "sku": "SKU-1001",
-    "category": "Electronics",
-    "sellPrice": 450.00,
-    "buyPrice": 320.00,
-    "stockQuantity": 50,
-    "unit": "pcs",
-    "lowStockThreshold": 5
-  }
-  ```
-
-- **`PUT /api/items/:id`**
-  ```json
-  {
-    "name": "Wireless Mouse Ergonomic",
-    "sku": "SKU-1001-V2",
-    "category": "Electronics",
-    "sellPrice": 480.00,
-    "buyPrice": 340.00,
-    "stockQuantity": 60,
-    "unit": "pcs",
-    "lowStockThreshold": 10
-  }
-  ```
-
-- **`PATCH /api/items/:id/stock`**
-  ```json
-  {
-    "adjustment": 10
-  }
-  ```
-
-- **`POST /api/categories`**
-  ```json
-  {
-    "name": "Electronics",
-    "description": "Computer peripherals and hardware accessories"
-  }
-  ```
 
 ---
 
@@ -381,27 +186,7 @@ npm run start:prod
 | `PUT` | `/api/customers/:id` | Update customer info | Permission: `canEditCustomers` |
 | `DELETE` | `/api/customers/:id` | Delete customer (Moves to Recycle Bin) | Permission: `canEditCustomers` |
 | `GET` | `/api/customers/:id/ledger` | Get transaction statement ledger (Paginated, `?startDate=...`, `?endDate=...`) | Authenticated |
-
-#### 📥 Request JSON Payloads (Customers)
-
-- **`POST /api/customers`**
-  ```json
-  {
-    "name": "Rahim Traders",
-    "phone": "01711000000",
-    "address": "Motijheel, Dhaka",
-    "openingBalance": 100.00
-  }
-  ```
-
-- **`PUT /api/customers/:id`**
-  ```json
-  {
-    "name": "Rahim Store Ltd",
-    "phone": "01711000000",
-    "address": "Dhanmondi, Dhaka"
-  }
-  ```
+| `GET` | `/api/customers/:id/due-reminder-link` | Generate WhatsApp direct chat link for due payment reminder | Authenticated |
 
 ---
 
@@ -413,28 +198,7 @@ npm run start:prod
 | `GET` | `/api/sales` | List invoices (Paginated, `?cashierId=...`, `?paymentStatus=...`, `?startDate=...`, `?endDate=...`) | Authenticated |
 | `GET` | `/api/sales/invoice/:invoiceNumber` | Fetch invoice details by number | Authenticated |
 | `GET` | `/api/sales/:id` | Get sale details by ID | Authenticated |
-
-#### 📥 Request JSON Payloads (Sales & POS Billing)
-
-- **`POST /api/sales`**
-  ```json
-  {
-    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
-    "customerName": "Rahim Traders",
-    "customerPhone": "01711000000",
-    "items": [
-      {
-        "itemId": "65c1a2b3c4d5e6f7a8b9c0e2",
-        "quantity": 2,
-        "unitPrice": 450.00,
-        "discount": 10.00,
-        "discountType": "percent"
-      }
-    ],
-    "discount": 20.00,
-    "paidAmount": 700.00
-  }
-  ```
+| `GET` | `/api/sales/:id/whatsapp-link` | Generate WhatsApp direct chat link for sales receipt | Authenticated |
 
 ---
 
@@ -445,17 +209,6 @@ npm run start:prod
 | `POST` | `/api/payments` | Process payment against customer due balance | Authenticated |
 | `GET` | `/api/payments` | List customer payment collection history (Paginated, `?customerId=...`, `?paymentMethod=...`, `?startDate=...`, `?endDate=...`) | Authenticated |
 
-#### 📥 Request JSON Payloads (Due Payments)
-
-- **`POST /api/payments`**
-  ```json
-  {
-    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
-    "amount": 500.00,
-    "paymentMethod": "cash"
-  }
-  ```
-
 ---
 
 ### 9. 🔄 Restocking & Product Returns
@@ -464,23 +217,6 @@ npm run start:prod
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/returns` | Process product return & restock inventory | Permission: `canProcessReturn` |
 | `GET` | `/api/returns` | List return transaction history (Paginated, `?startDate=...`, `?endDate=...`) | Authenticated |
-
-#### 📥 Request JSON Payloads (Returns & Restocking)
-
-- **`POST /api/returns`**
-  ```json
-  {
-    "customerId": "65c1a2b3c4d5e6f7a8b9c0d1",
-    "saleId": "65c1a2b3c4d5e6f7a8b9c0d2",
-    "returnedItems": [
-      {
-        "itemId": "65c1a2b3c4d5e6f7a8b9c0e2",
-        "quantity": 1
-      }
-    ],
-    "refundMethod": "due_adjust"
-  }
-  ```
 
 ---
 
@@ -499,8 +235,20 @@ npm run start:prod
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/dashboard/stats` | Get shop KPIs (Revenue, Profit, Due, Stock Warnings) | Authenticated |
+| `GET` | `/api/dashboard/insights` | Get profit margins, top selling items, and top customer analytics | Authenticated |
 | `GET` | `/api/dashboard/superadmin` | Get platform metrics (Shops count, Revenue, Pending Payments) | SuperAdmin Only |
 | `GET` | `/api/reports/sales` | Detailed sales report with date range filters (Paginated) | Authenticated |
+
+---
+
+### 12. 📥 Bulk CSV Data Export
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/export/inventory` | Export inventory product list to CSV file | Authenticated |
+| `GET` | `/api/export/customers` | Export customer list and due balances to CSV file | Authenticated |
+| `GET` | `/api/export/sales` | Export sales invoices history to CSV file | Permission: `canExportExcel` |
+| `GET` | `/api/export/ledger/:customerId` | Export single customer transaction ledger to CSV file | Authenticated |
 
 ---
 
@@ -511,4 +259,4 @@ npm run start:prod
 - **Security & Throttling**: `@nestjs/throttler` (20 req/min), Passport JWT, bcrypt password hashing
 - **Validation**: `class-validator` & `class-transformer`
 - **Documentation**: Swagger OpenAPI (`@nestjs/swagger`)
-- **Frontend UI**: Responsive HTML5 + Glassmorphism Dark UI served statically.
+- **Frontend UI**: Responsive HTML5 + Glassmorphic Dark UI served statically.
