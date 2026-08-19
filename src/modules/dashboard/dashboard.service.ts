@@ -7,6 +7,8 @@ import { Customer, CustomerDocument } from '../customers/schemas/customer.schema
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { SubscriptionPayment, SubscriptionPaymentSchema } from '../subscriptions/schemas/subscription-payment.schema';
 
+import { Expense, ExpenseDocument } from '../expenses/schemas/expense.schema';
+
 /**
  * Dashboard & Business Analytics Service
  * শপ ওভারভিউ KPIs, বিক্রয় রিপোর্ট এবং সুপার অ্যাডমিন প্ল্যাটফর্ম মেট্রিক্স হিসাব করার সার্ভিস।
@@ -19,6 +21,7 @@ export class DashboardService {
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(SubscriptionPayment.name) private subscriptionPaymentModel: Model<SubscriptionPayment>,
+    @InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>,
   ) {}
 
   /**
@@ -29,13 +32,19 @@ export class DashboardService {
     const shopId = user.shopId;
 
     // শুধুমাত্র নিজস্ব শপের এক্টিভ (isDeleted: false) ডাটা আনা হচ্ছে
-    const sales = await this.saleModel.find({ shopId, isDeleted: { $ne: true } }).exec();
-    const items = await this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec();
-    const customers = await this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec();
+    const [sales, items, customers, expenses] = await Promise.all([
+      this.saleModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.expenseModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+    ]);
 
     let totalSalesRevenue = 0;
     let totalPaidCollected = 0;
     let totalDue = 0;
+    let totalExpenses = 0;
+
+    expenses.forEach(e => totalExpenses += e.amount);
 
     // মোট বিক্রি, ক্যাশ জমা ও বকেয়া হিসাব
     for (const s of sales) {
@@ -44,7 +53,7 @@ export class DashboardService {
       totalDue += s.dueAmount;
     }
 
-    // নিট লাভ (Profit) হিসাব - শুধুমাত্র অ্যাডমিন বা কেনাদাম দেখার অনুমতি প্রাপ্ত ইউজাররা দেখতে পাবেন
+    // নিট লাভ (Profit) হিসাব - (Gross Profit - Operating Expenses)
     let netProfit = 0;
     const canViewBuy = user.role === 'admin' || user.role === 'superadmin' || user.permissions?.canViewBuyPrice;
     
@@ -52,14 +61,16 @@ export class DashboardService {
       const itemsMap = new Map<string, number>();
       items.forEach(i => itemsMap.set(i._id.toString(), i.buyPrice));
 
+      let grossProfit = 0;
       for (const s of sales) {
         for (const itemDetail of s.items) {
           const buyPrice = itemsMap.get(itemDetail.itemId) || 0;
           const cost = buyPrice * itemDetail.quantity;
           const profit = itemDetail.totalPrice - cost;
-          netProfit += profit;
+          grossProfit += profit;
         }
       }
+      netProfit = grossProfit - totalExpenses;
     }
 
     // কম স্টক সম্পন্ন প্রোডাক্টের সংখ্যা হিসাব (Low Stock Alerts)
@@ -77,6 +88,7 @@ export class DashboardService {
       totalSalesRevenue: totalSalesRevenue.toString(),
       totalPaidCollected: totalPaidCollected.toString(),
       totalDueAmount: totalDue.toString(),
+      totalExpenses: totalExpenses.toString(),
       netProfit: canViewBuy ? netProfit.toString() : 'N/A',
       totalItemsCount: items.length,
       lowStockCount: lowStockItems.length,
@@ -313,6 +325,110 @@ export class DashboardService {
           .map(i => ({
             name: i.name,
             totalProfit: i.totalProfit.toFixed(2),
+            marginPercent: i.totalRevenue > 0 ? ((i.totalProfit / i.totalRevenue) * 100).toFixed(2) + '%' : '0%',
+          }))
+      : [];
+
+    const topCustomers = Array.from(customerAnalyticsMap.values())
+      .filter(c => c.id !== 'walk-in')
+      .sort((a, b) => b.totalPurchased - a.totalPurchased)
+      .slice(0, 5)
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        totalPurchased: c.totalPurchased.toFixed(2),
+        invoiceCount: c.invoiceCount,
+        dueBalance: c.dueBalance.toFixed(2),
+      }));
+
+    const netProfit = grandTotalRevenue - grandTotalCost;
+    const profitMarginPercent = grandTotalRevenue > 0 ? ((netProfit / grandTotalRevenue) * 100).toFixed(2) + '%' : '0%';
+
+    return {
+      summary: {
+        totalSalesRevenue: grandTotalRevenue.toFixed(2),
+        totalCost: canViewBuy ? grandTotalCost.toFixed(2) : 'N/A',
+        netProfit: canViewBuy ? netProfit.toFixed(2) : 'N/A',
+        overallProfitMarginPercent: canViewBuy ? profitMarginPercent : 'N/A',
+      },
+      topSellingByQuantity,
+      topSellingByRevenue,
+      mostProfitableItems,
+      topCustomers,
+    };
+  }
+
+  /**
+   * 5. Get Unified Shop Notification & Smart Alerts Center
+   */
+  async getShopAlerts(user: any) {
+    const shopId = user.shopId;
+    const [items, customers, userDoc] = await Promise.all([
+      this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.userModel.findOne({ _id: user.uid || user.id }).exec(),
+    ]);
+
+    const lowStockAlerts = items
+      .filter(i => i.stockQuantity <= i.lowStockThreshold)
+      .map(i => ({
+        id: i._id.toString(),
+        name: i.name,
+        sku: i.sku,
+        stockQuantity: i.stockQuantity,
+        lowStockThreshold: i.lowStockThreshold,
+        severity: i.stockQuantity <= 0 ? 'CRITICAL' : 'WARNING',
+      }));
+
+    const dueCustomers = customers
+      .filter(c => c.closingBalance < 0)
+      .map(c => ({
+        id: c._id.toString(),
+        name: c.name,
+        phone: c.phone,
+        dueAmount: Math.abs(c.closingBalance).toFixed(2),
+      }));
+
+    let totalDueAmount = 0;
+    dueCustomers.forEach(c => totalDueAmount += Number(c.dueAmount));
+
+    // Subscription status warning
+    let subscriptionAlert: any = null;
+    if (userDoc && userDoc.subscriptionTier === 'premium' && userDoc.subscriptionExpiresAt) {
+      const now = Date.now();
+      const expires = new Date(userDoc.subscriptionExpiresAt).getTime();
+      const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
+
+      if (daysLeft <= 0) {
+        subscriptionAlert = {
+          status: 'EXPIRED',
+          message: 'Your Premium subscription has expired. Please renew to avoid feature restrictions.',
+          daysLeft: 0,
+        };
+      } else if (daysLeft <= 7) {
+        subscriptionAlert = {
+          status: 'EXPIRING_SOON',
+          message: `Your Premium subscription expires in ${daysLeft} days. Please submit a renewal payment.`,
+          daysLeft,
+        };
+      }
+    }
+
+    return {
+      totalAlertsCount: lowStockAlerts.length + dueCustomers.length + (subscriptionAlert ? 1 : 0),
+      lowStock: {
+        count: lowStockAlerts.length,
+        items: lowStockAlerts,
+      },
+      customerDues: {
+        count: dueCustomers.length,
+        totalDueAmount: totalDueAmount.toFixed(2),
+        customers: dueCustomers,
+      },
+      subscription: subscriptionAlert,
+    };
+  }
+}lProfit: i.totalProfit.toFixed(2),
             marginPercent: i.totalRevenue > 0 ? ((i.totalProfit / i.totalRevenue) * 100).toFixed(2) + '%' : '0%',
           }))
       : [];

@@ -35,6 +35,15 @@ export class DashboardController {
   }
 
   /**
+   * 1c. Get Unified Shop Notification & Smart Alerts Center Endpoint
+   */
+  @Get('dashboard/alerts')
+  @ApiOperation({ summary: 'Get aggregated active shop notifications (low stock, customer dues, subscription expiry)' })
+  getShopAlerts(@GetUser() user: any) {
+    return this.dashboardService.getShopAlerts(user);
+  }
+
+  /**
    * 2. Get SuperAdmin Platform Dashboard Endpoint
    * প্ল্যাটফর্মের মোট শপ সংখ্যা, সাবস্ক্রিপশন ফি সংগ্রহ, পেন্ডিং পেমেন্ট রিকোয়েস্ট ও স্ট্যাটস দেখার রাউট।
    */

@@ -7,6 +7,7 @@ import { Item, ItemSchema } from '../inventory/schemas/item.schema';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { SubscriptionPayment, SubscriptionPaymentSchema } from '../subscriptions/schemas/subscription-payment.schema';
+import { Expense, ExpenseSchema } from '../expenses/schemas/expense.schema';
 
 /**
  * Dashboard & Analytics Module
@@ -21,6 +22,7 @@ import { SubscriptionPayment, SubscriptionPaymentSchema } from '../subscriptions
       { name: Customer.name, schema: CustomerSchema },
       { name: User.name, schema: UserSchema },
       { name: SubscriptionPayment.name, schema: SubscriptionPaymentSchema },
+      { name: Expense.name, schema: ExpenseSchema },
     ]),
   ],
   controllers: [DashboardController],
