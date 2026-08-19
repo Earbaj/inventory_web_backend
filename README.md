@@ -380,7 +380,7 @@ npm run start:prod
 | `GET` | `/api/customers/:id` | Get customer profile | Authenticated |
 | `PUT` | `/api/customers/:id` | Update customer info | Permission: `canEditCustomers` |
 | `DELETE` | `/api/customers/:id` | Delete customer (Moves to Recycle Bin) | Permission: `canEditCustomers` |
-| `GET` | `/api/customers/:id/ledger` | Get transaction statement ledger (Paginated) | Authenticated |
+| `GET` | `/api/customers/:id/ledger` | Get transaction statement ledger (Paginated, `?startDate=...`, `?endDate=...`) | Authenticated |
 
 #### 📥 Request JSON Payloads (Customers)
 
@@ -443,6 +443,7 @@ npm run start:prod
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/payments` | Process payment against customer due balance | Authenticated |
+| `GET` | `/api/payments` | List customer payment collection history (Paginated, `?customerId=...`, `?paymentMethod=...`, `?startDate=...`, `?endDate=...`) | Authenticated |
 
 #### 📥 Request JSON Payloads (Due Payments)
 
@@ -462,7 +463,7 @@ npm run start:prod
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/returns` | Process product return & restock inventory | Permission: `canProcessReturn` |
-| `GET` | `/api/returns` | List return transaction history (Paginated) | Authenticated |
+| `GET` | `/api/returns` | List return transaction history (Paginated, `?startDate=...`, `?endDate=...`) | Authenticated |
 
 #### 📥 Request JSON Payloads (Returns & Restocking)
 
