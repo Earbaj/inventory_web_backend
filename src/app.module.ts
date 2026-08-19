@@ -16,6 +16,7 @@ import { ReturnsModule } from './modules/returns/returns.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { TrashModule } from './modules/trash/trash.module';
+import { SeedModule } from './modules/seed/seed.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { ExportModule } from './modules/export/export.module';
 
