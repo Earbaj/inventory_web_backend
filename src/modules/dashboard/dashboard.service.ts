@@ -200,4 +200,149 @@ export class DashboardService {
       platformTotalSales: totalSales,
     };
   }
+
+  /**
+   * 4. Get Profit Margin & Top Seller Analytics Insights
+   */
+  async getDashboardAnalyticsInsights(user: any) {
+    const shopId = user.shopId;
+    const canViewBuy = user.role === 'admin' || user.role === 'superadmin' || user.permissions?.canViewBuyPrice;
+
+    const [sales, items, customers] = await Promise.all([
+      this.saleModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.itemModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+      this.customerModel.find({ shopId, isDeleted: { $ne: true } }).exec(),
+    ]);
+
+    const buyPriceMap = new Map<string, number>();
+    items.forEach(i => buyPriceMap.set(i._id.toString(), i.buyPrice));
+
+    const itemAnalyticsMap = new Map<string, {
+      name: string;
+      category: string;
+      quantitySold: number;
+      totalRevenue: number;
+      totalCost: number;
+      totalProfit: number;
+    }>();
+
+    const customerAnalyticsMap = new Map<string, {
+      id: string;
+      name: string;
+      totalPurchased: number;
+      invoiceCount: number;
+      dueBalance: number;
+    }>();
+
+    let grandTotalRevenue = 0;
+    let grandTotalCost = 0;
+
+    for (const s of sales) {
+      grandTotalRevenue += s.grandTotal;
+
+      // Customer analytics
+      const cId = s.customerId || 'walk-in';
+      const cName = s.customerName || 'Walk-in Customer';
+      const existingC = customerAnalyticsMap.get(cId) || {
+        id: cId,
+        name: cName,
+        totalPurchased: 0,
+        invoiceCount: 0,
+        dueBalance: 0,
+      };
+      existingC.totalPurchased += s.grandTotal;
+      existingC.invoiceCount += 1;
+      customerAnalyticsMap.set(cId, existingC);
+
+      // Item analytics
+      for (const item of s.items) {
+        const buyP = buyPriceMap.get(item.itemId) || 0;
+        const cost = buyP * item.quantity;
+        const profit = item.totalPrice - cost;
+
+        grandTotalCost += cost;
+
+        const existingI = itemAnalyticsMap.get(item.itemId) || {
+          name: item.name,
+          category: '',
+          quantitySold: 0,
+          totalRevenue: 0,
+          totalCost: 0,
+          totalProfit: 0,
+        };
+        existingI.quantitySold += item.quantity;
+        existingI.totalRevenue += item.totalPrice;
+        existingI.totalCost += cost;
+        existingI.totalProfit += profit;
+        itemAnalyticsMap.set(item.itemId, existingI);
+      }
+    }
+
+    // Attach customer current due balance
+    customers.forEach(c => {
+      const existing = customerAnalyticsMap.get(c._id.toString());
+      if (existing) {
+        existing.dueBalance = c.closingBalance < 0 ? Math.abs(c.closingBalance) : 0;
+      }
+    });
+
+    const itemAnalyticsArray = Array.from(itemAnalyticsMap.values());
+
+    const topSellingByQuantity = [...itemAnalyticsArray]
+      .sort((a, b) => b.quantitySold - a.quantitySold)
+      .slice(0, 5)
+      .map(i => ({
+        name: i.name,
+        quantitySold: i.quantitySold,
+        totalRevenue: i.totalRevenue.toFixed(2),
+      }));
+
+    const topSellingByRevenue = [...itemAnalyticsArray]
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 5)
+      .map(i => ({
+        name: i.name,
+        quantitySold: i.quantitySold,
+        totalRevenue: i.totalRevenue.toFixed(2),
+      }));
+
+    const mostProfitableItems = canViewBuy
+      ? [...itemAnalyticsArray]
+          .sort((a, b) => b.totalProfit - a.totalProfit)
+          .slice(0, 5)
+          .map(i => ({
+            name: i.name,
+            totalProfit: i.totalProfit.toFixed(2),
+            marginPercent: i.totalRevenue > 0 ? ((i.totalProfit / i.totalRevenue) * 100).toFixed(2) + '%' : '0%',
+          }))
+      : [];
+
+    const topCustomers = Array.from(customerAnalyticsMap.values())
+      .filter(c => c.id !== 'walk-in')
+      .sort((a, b) => b.totalPurchased - a.totalPurchased)
+      .slice(0, 5)
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        totalPurchased: c.totalPurchased.toFixed(2),
+        invoiceCount: c.invoiceCount,
+        dueBalance: c.dueBalance.toFixed(2),
+      }));
+
+    const netProfit = grandTotalRevenue - grandTotalCost;
+    const profitMarginPercent = grandTotalRevenue > 0 ? ((netProfit / grandTotalRevenue) * 100).toFixed(2) + '%' : '0%';
+
+    return {
+      summary: {
+        totalSalesRevenue: grandTotalRevenue.toFixed(2),
+        totalCost: canViewBuy ? grandTotalCost.toFixed(2) : 'N/A',
+        netProfit: canViewBuy ? netProfit.toFixed(2) : 'N/A',
+        overallProfitMarginPercent: canViewBuy ? profitMarginPercent : 'N/A',
+      },
+      topSellingByQuantity,
+      topSellingByRevenue,
+      mostProfitableItems,
+      topCustomers,
+    };
+  }
 }

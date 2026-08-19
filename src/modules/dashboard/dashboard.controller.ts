@@ -26,6 +26,15 @@ export class DashboardController {
   }
 
   /**
+   * 1b. Get Profit Margin & Top Seller Analytics Insights Endpoint
+   */
+  @Get('dashboard/insights')
+  @ApiOperation({ summary: 'Get profit margins, top selling items, and top customer analytics' })
+  getDashboardAnalyticsInsights(@GetUser() user: any) {
+    return this.dashboardService.getDashboardAnalyticsInsights(user);
+  }
+
+  /**
    * 2. Get SuperAdmin Platform Dashboard Endpoint
    * প্ল্যাটফর্মের মোট শপ সংখ্যা, সাবস্ক্রিপশন ফি সংগ্রহ, পেন্ডিং পেমেন্ট রিকোয়েস্ট ও স্ট্যাটস দেখার রাউট।
    */
